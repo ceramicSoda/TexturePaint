@@ -9,8 +9,16 @@ let scene, camera, controls, renderer;
 
 const mSphere = new THREE.MeshStandardMaterial({color: 0xEEEEEE, vertexColors: true})
 const gSphere = new THREE.SphereGeometry(10, 64, 32);
+const colors = [];
+for ( let i = 0; i < gSphere.attributes.position.count; ++ i ) {
+    let hui = gSphere.attributes.position.count; 
+    //colors.push( Math.sin(i*40), Math.cos(i*40), Math.sin(i*40) );
+    colors.push( i/hui, Math.sin(i*hui), (hui-i)/hui );
+}
+gSphere.setAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
+
 const sphere = new THREE.Mesh(gSphere, mSphere)
-console.log(sphere.geometry)
+console.log(sphere.geometry.attributes.position)
 
 function Init(){
     scene = new THREE.Scene();
@@ -27,7 +35,6 @@ function Init(){
     controls = new OrbitControls( camera, renderer.domElement );
     controls.listenToKeyEvents( window );  
     scene.add(sphere);
-    console.log(scene); 
     // lights
     const dirLight1 = new THREE.DirectionalLight( 0xffffff );
     dirLight1.position.set( 1, 1, 1 );
@@ -40,18 +47,20 @@ function Init(){
 }
 
 function onWindowResize() {
-
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize( window.innerWidth, window.innerHeight );
 }
+
 function animate() {
     requestAnimationFrame( animate );
     controls.update();
     render();
 }
+
 function render() {
     renderer.render( scene, camera );
 }
+
 Init();
 animate();
