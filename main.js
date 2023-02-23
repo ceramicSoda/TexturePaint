@@ -3,10 +3,14 @@ import './style.css'
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { WireframeGeometry } from 'three';
 
 let scene, camera, controls, renderer; 
-Init();
-animate();
+
+const mSphere = new THREE.MeshStandardMaterial({color: 0xEEEEEE, vertexColors: true})
+const gSphere = new THREE.SphereGeometry(10, 64, 32);
+const sphere = new THREE.Mesh(gSphere, mSphere)
+console.log(sphere.geometry)
 
 function Init(){
     scene = new THREE.Scene();
@@ -18,23 +22,20 @@ function Init(){
     document.querySelector("#canvas-wrap").appendChild( renderer.domElement );
 
     camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 1000 );
-    camera.position.set( 50, 50, 0 );
+    camera.position.set( 32, 0, 0 );
 
     controls = new OrbitControls( camera, renderer.domElement );
-    controls.listenToKeyEvents( window ); 
-
-    const geometry = new THREE.SphereGeometry(10, 64, 32);
-    const material = new THREE.MeshPhongMaterial( { color: 0xffffff, flatShading: false } );
-    scene.add(new THREE.Mesh(geometry, material));
-
+    controls.listenToKeyEvents( window );  
+    scene.add(sphere);
+    console.log(scene); 
     // lights
     const dirLight1 = new THREE.DirectionalLight( 0xffffff );
     dirLight1.position.set( 1, 1, 1 );
     scene.add( dirLight1 );
-    const dirLight2 = new THREE.DirectionalLight( 0x002288 );
-    dirLight2.position.set( - 1, - 1, - 1 );
+    const dirLight2 = new THREE.DirectionalLight( 0xAA5544 );
+    dirLight2.position.set( - 2, - 2, - 2 );
     scene.add( dirLight2 );
-    const ambientLight = new THREE.AmbientLight( 0x222222 );
+    const ambientLight = new THREE.AmbientLight( 0x444444 );
     scene.add( ambientLight );
 }
 
@@ -44,13 +45,13 @@ function onWindowResize() {
     camera.updateProjectionMatrix();
     renderer.setSize( window.innerWidth, window.innerHeight );
 }
-
 function animate() {
     requestAnimationFrame( animate );
     controls.update();
     render();
 }
-
 function render() {
     renderer.render( scene, camera );
 }
+Init();
+animate();
