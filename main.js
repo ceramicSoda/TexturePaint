@@ -3,9 +3,8 @@ import './style.css'
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { WireframeGeometry } from 'three';
 
-let scene, camera, controls, renderer; 
+let scene, camera, controls, renderer, raycaster, pointer; 
 
 const mSphere = new THREE.MeshStandardMaterial({color: 0xEEEEEE, vertexColors: true})
 const gSphere = new THREE.SphereGeometry(10, 64, 32);
@@ -13,7 +12,7 @@ const colors = [];
 for ( let i = 0; i < gSphere.attributes.position.count; ++ i ) {
     let hui = gSphere.attributes.position.count; 
     //colors.push( Math.sin(i*40), Math.cos(i*40), Math.sin(i*40) );
-    colors.push( i/hui, Math.sin(i*hui), (hui-i)/hui );
+    colors.push( i/hui, Math.cos(i*hui), (hui-i)/hui );
 }
 gSphere.setAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
 
