@@ -5,7 +5,9 @@ import { Scene3D } from './VertexPaint';
 let scene3D = new Scene3D(document.querySelector("#canvas-wrap"))
 scene3D.init();
 scene3D.animate();
-
+function onWindowResize() {
+    scene3D.resize();
+}
 /*
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';

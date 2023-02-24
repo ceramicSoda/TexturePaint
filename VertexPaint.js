@@ -19,7 +19,7 @@ export class Scene3D{
         this.raycaster = {}; 
         this.loader = new GLTFLoader(); 
         this.dracoLoader = new DRACOLoader();
-        this.gltfPath = "assets/test.glb"; 
+        this.gltfPath = "assets/dog.glb"; 
         // Vertex-paint specific
         this.mesh = null; 
         this.paintHistory = [];
@@ -29,10 +29,12 @@ export class Scene3D{
     }
 
     #loadMesh(){
-        //this.dracoLoader.setDecoderPath( 'https://www.gstatic.com/draco/v1/decoders/' ); 
-        //this.loader.setDRACOLoader( this.dracoLoader );
+        this.dracoLoader.setDecoderPath( 'https://www.gstatic.com/draco/v1/decoders/' ); 
+        this.loader.setDRACOLoader( this.dracoLoader );
         this.loader.load( this.gltfPath, (gltf) => {
-            this.mesh = gltf.scene;
+            this.mesh = Object.create(gltf.scene.children);
+            this.scene.add(gltf.scene)
+            console.log(gltf.scene);
         }, undefined, console.error);
     }
 
@@ -51,16 +53,20 @@ export class Scene3D{
         this.controls.listenToKeyEvents( window );
         this.controls.minDistance = Math.max(size.x, size.y, size.z);
         this.controls.maxDistance = this.controls.minDistance*3;
+        this.controls.mouseButtons = {
+            RIGHT: THREE.MOUSE.ROTATE
+        }
         this.camera.position.set( this.controls.minDistance, 0, 0 );
 
         const light1 = new THREE.DirectionalLight( 0xffffff );
         light1.position.set( 1, 1, 1 );
         this.scene.add( light1 );
-        const light2 = new THREE.DirectionalLight( 0xAA5544 );
+        const light2 = new THREE.DirectionalLight( 0xAA9944 );
         light2.position.set( - 2, - 2, - 2 );
         this.scene.add( light2 );
         const light3 = new THREE.AmbientLight( 0x444444 );
         this.scene.add( light3 );
+        console.log(this.mesh)
     }
 
     resize(){
@@ -70,7 +76,7 @@ export class Scene3D{
     }
     
     animate() {
-        requestAnimationFrame( this.animate() );
+        requestAnimationFrame( this.animate.bind(this) );
         this.controls.update();
         this.render();
     }
