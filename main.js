@@ -1,6 +1,12 @@
 import './reset.css'
 import './style.css'
+import { Scene3D } from './VertexPaint'; 
 
+let scene3D = new Scene3D(document.querySelector("#canvas-wrap"))
+scene3D.init();
+scene3D.animate();
+
+/*
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
@@ -61,5 +67,9 @@ function render() {
     renderer.render( scene, camera );
 }
 
+
 Init();
 animate();
+*/  
+
+

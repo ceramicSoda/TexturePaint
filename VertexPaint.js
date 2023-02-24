@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
-class Scene3D{
+export class Scene3D{
     constructor(canvasRoot){
         if (Scene3D.exists){
             return Scene3D.instance; 
@@ -14,12 +14,12 @@ class Scene3D{
         this.scene = new THREE.Scene;
         this.camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 1000 );
         this.renderer = new THREE.WebGLRenderer();
-        this.canvasRoot = canvasElement;
-        this.controls = new OrbitControls( camera, renderer.domElement );
+        this.canvasRoot = canvasRoot;
+        this.controls = new OrbitControls( this.camera, this.renderer.domElement );
         this.raycaster = {}; 
         this.loader = new GLTFLoader(); 
         this.dracoLoader = new DRACOLoader();
-        this.gltfPath = "assets/dog.gltf"; 
+        this.gltfPath = "assets/test.glb"; 
         // Vertex-paint specific
         this.mesh = null; 
         this.paintHistory = [];
@@ -29,24 +29,24 @@ class Scene3D{
     }
 
     #loadMesh(){
-        this.dracoLoader.setDecoderPath( 'js/libs/draco/gltf/' ); 
-        loader.setDRACOLoader( dracoLoader );
-        loader.load( this.gltfPath, (gltf) => {
-            this.mesh = gltf.scene; 
-        }, undefined, console.error("failed to load GLTF !!!") );
+        //this.dracoLoader.setDecoderPath( 'https://www.gstatic.com/draco/v1/decoders/' ); 
+        //this.loader.setDRACOLoader( this.dracoLoader );
+        this.loader.load( this.gltfPath, (gltf) => {
+            this.mesh = gltf.scene;
+        }, undefined, console.error);
     }
 
     init(){
-        scene.background = new THREE.Color( 0x141417 );
+        this.scene.background = new THREE.Color( 0x141417 );
 
         this.renderer.setPixelRatio( window.devicePixelRatio );
         this.renderer.setSize( window.innerWidth, window.innerHeight );
-        this.canvasRoot.appendChild( renderer.domElement );
+        this.canvasRoot.appendChild( this.renderer.domElement );
 
         this.#loadMesh();
-        let boundBox = THREE.Box3setFromObject( this.mesh );
-        let size = new THREE.Vector3();
-        box3.getSize(size);
+        //let boundBox = new THREE.Box3().setFromObject(this.mesh);
+        let size = new THREE.Vector3(20,30,25);
+        //box3.getSize(size);
         
         this.controls.listenToKeyEvents( window );
         this.controls.minDistance = Math.max(size.x, size.y, size.z);
@@ -59,7 +59,7 @@ class Scene3D{
         const light2 = new THREE.DirectionalLight( 0xAA5544 );
         light2.position.set( - 2, - 2, - 2 );
         this.scene.add( light2 );
-        const light3 = new THREE.light3( 0x444444 );
+        const light3 = new THREE.AmbientLight( 0x444444 );
         this.scene.add( light3 );
     }
 
@@ -70,12 +70,12 @@ class Scene3D{
     }
     
     animate() {
-        requestAnimationFrame( this.animate );
+        requestAnimationFrame( this.animate() );
         this.controls.update();
-        render();
+        this.render();
     }
 
-    #render() {
+    render() {
         this.renderer.render( this.scene, this.camera );
     }
 }
