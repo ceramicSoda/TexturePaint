@@ -16,27 +16,35 @@ export class Scene3D{
         this.renderer = new THREE.WebGLRenderer();
         this.canvasRoot = canvasRoot;
         this.controls = new OrbitControls( this.camera, this.renderer.domElement );
-        this.raycaster = {}; 
+        this.raycaster = new THREE.Raycaster(); 
+        this.poiner = new THREE.Vector2();
         this.loader = new GLTFLoader(); 
         this.dracoLoader = new DRACOLoader();
-        this.gltfPath = "assets/test.glb"; 
+        this.gltfPath = "assets/dog.glb"; 
         // Vertex-paint specific
         this.mesh = new THREE.Group(); 
         this.paintHistory = [];
         this.vertexColor = []; 
         this.baseColor = [1,1,1];
     }
-
-    #findLoadedMesh(childObj){
-        //if (childObj[0] )
+    #findNestedMesh(childArray){
+        if (childArray[0].type == "Group")
+            return(this.#findNestedMesh(childArray[0].children))
+        else if (childArray[0].type == "Mesh" || childArray[0].type == "Scene")
+            return([...childArray])
     }
 
     #loadMesh(){
         this.dracoLoader.setDecoderPath( 'https://www.gstatic.com/draco/v1/decoders/' ); 
         this.loader.setDRACOLoader( this.dracoLoader );
-        this.loader.load( this.gltfPath, (gltf) => {
-            this.mesh.add(gltf.scene);
-        }, undefined, console.error);
+        this.loader.loadAsync( this.gltfPath, undefined)
+        .catch(err => console.err(err))
+        .then(gltf => {
+            // Because screw nested scene structure of three.js!!!
+            // Make all your transormations with mesh if needed
+            this.mesh.add(...this.#findNestedMesh(gltf.scene.children))
+        })
+        
     }
 
     init(){
@@ -60,6 +68,7 @@ export class Scene3D{
         }
         this.camera.position.set( -32, 8, 64 );
 
+        this.scene.add(this.mesh)
         const light1 = new THREE.DirectionalLight( 0xffffff );
         light1.position.set( 1, 1, 1 );
         this.scene.add( light1 );
@@ -68,8 +77,6 @@ export class Scene3D{
         this.scene.add( light2 );
         const light3 = new THREE.AmbientLight( 0x444444 );
         this.scene.add( light3 );
-        this.scene.add(this.mesh)
-        console.log(this.mesh.children)
     }
 
     resize(){
