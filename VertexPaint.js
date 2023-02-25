@@ -19,22 +19,23 @@ export class Scene3D{
         this.raycaster = {}; 
         this.loader = new GLTFLoader(); 
         this.dracoLoader = new DRACOLoader();
-        this.gltfPath = "assets/dog.glb"; 
+        this.gltfPath = "assets/test.glb"; 
         // Vertex-paint specific
-        this.mesh = null; 
+        this.mesh = new THREE.Group(); 
         this.paintHistory = [];
         this.vertexColor = []; 
         this.baseColor = [1,1,1];
-        // All scene objects 
+    }
+
+    #findLoadedMesh(childObj){
+        //if (childObj[0] )
     }
 
     #loadMesh(){
         this.dracoLoader.setDecoderPath( 'https://www.gstatic.com/draco/v1/decoders/' ); 
         this.loader.setDRACOLoader( this.dracoLoader );
         this.loader.load( this.gltfPath, (gltf) => {
-            this.mesh = Object.create(gltf.scene.children);
-            this.scene.add(gltf.scene)
-            console.log(gltf.scene);
+            this.mesh.add(gltf.scene);
         }, undefined, console.error);
     }
 
@@ -51,12 +52,13 @@ export class Scene3D{
         //box3.getSize(size);
         
         this.controls.listenToKeyEvents( window );
+        this.controls.enablePan = false; 
         this.controls.minDistance = Math.max(size.x, size.y, size.z);
         this.controls.maxDistance = this.controls.minDistance*3;
         this.controls.mouseButtons = {
             RIGHT: THREE.MOUSE.ROTATE
         }
-        this.camera.position.set( this.controls.minDistance, 0, 0 );
+        this.camera.position.set( -32, 8, 64 );
 
         const light1 = new THREE.DirectionalLight( 0xffffff );
         light1.position.set( 1, 1, 1 );
@@ -66,7 +68,8 @@ export class Scene3D{
         this.scene.add( light2 );
         const light3 = new THREE.AmbientLight( 0x444444 );
         this.scene.add( light3 );
-        console.log(this.mesh)
+        this.scene.add(this.mesh)
+        console.log(this.mesh.children)
     }
 
     resize(){
