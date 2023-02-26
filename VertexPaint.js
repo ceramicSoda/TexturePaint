@@ -17,7 +17,7 @@ export class Scene3D{
         this.canvasRoot = canvasRoot;
         this.controls = new OrbitControls( this.camera, this.renderer.domElement );
         this.raycaster = new THREE.Raycaster(); 
-        this.poiner = new THREE.Vector2();
+        this.pointer = new THREE.Vector2();
         this.loader = new GLTFLoader(); 
         this.dracoLoader = new DRACOLoader();
         this.gltfPath = "assets/dog.glb"; 
@@ -85,7 +85,18 @@ export class Scene3D{
         this.camera.updateProjectionMatrix();
         this.renderer.setSize( window.innerWidth, window.innerHeight );
     }
-    
+ 
+    rayMouseMove(e) {
+        this.pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+        this.pointer.y = - (e.clientY / window.innerHeight) * 2 + 1;
+    }   
+    rayMouseUp(e) {
+        if (e.button == 0) console.log(e)
+    }
+    rayMouseDown(e){
+        if (e.button == 0) console.log(e)
+    }
+
     animate() {
         requestAnimationFrame( this.animate.bind(this) );
         this.controls.update();
