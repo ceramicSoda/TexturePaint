@@ -91,10 +91,10 @@ export class Scene3D{
         this.pointer.y = - (e.clientY / window.innerHeight) * 2 + 1;
     }   
     rayMouseUp(e) {
-        if (e.button == 0) console.log(e)
+        //if (e.button == 0) 
     }
     rayMouseDown(e){
-        if (e.button == 0) console.log(e)
+        //if (e.button == 0) 
     }
 
     animate() {
