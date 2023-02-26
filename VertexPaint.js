@@ -16,11 +16,14 @@ export class Scene3D{
         this.renderer = new THREE.WebGLRenderer();
         this.canvasRoot = canvasRoot;
         this.controls = new OrbitControls( this.camera, this.renderer.domElement );
-        this.raycaster = new THREE.Raycaster(); 
-        this.pointer = new THREE.Vector2();
+        
         this.loader = new GLTFLoader(); 
         this.dracoLoader = new DRACOLoader();
         this.gltfPath = "assets/dog.glb"; 
+
+        this.raycaster = new THREE.Raycaster(); 
+        this.intersects = null; 
+        this.pointer = new THREE.Vector2();
         // Vertex-paint specific
         this.mesh = new THREE.Group(); 
         this.paintHistory = [];
@@ -77,7 +80,14 @@ export class Scene3D{
         this.scene.add( light2 );
         const light3 = new THREE.AmbientLight( 0x444444 );
         this.scene.add( light3 );
-        console.log(this.scene);
+        // Raycasting marker 
+        this.marker = new THREE.Mesh(
+            new THREE.SphereGeometry(1, 16, 8 ), 
+            new THREE.MeshBasicMaterial( 0xffffff )
+        )  
+        this.scene.add(this.marker);
+
+        console.log(this.mesh)
     }
 
     resize(){
@@ -94,16 +104,29 @@ export class Scene3D{
         //if (e.button == 0) 
     }
     rayMouseDown(e){
-        //if (e.button == 0) 
+        //if (e.button == 0) console.log(this.intersects    0])
+        if (e.button == 0) {
+            
+        }
     }
 
     animate() {
         requestAnimationFrame( this.animate.bind(this) );
         this.controls.update();
         this.render();
+        
     }
 
     render() {
+        this.raycaster.setFromCamera( this.pointer, this.camera );
+        this.intersects = this.raycaster.intersectObject(this.mesh);
+        if (this.intersects[0]) {
+            document.body.style.cursor = 'none'
+            this.marker.position.x = this.intersects[0].point.x; 
+            this.marker.position.y = this.intersects[0].point.y; 
+            this.marker.position.z = this.intersects[0].point.z; 
+        }
+            else document.body.style.cursor = 'default'
         this.renderer.render( this.scene, this.camera );
     }
 }
