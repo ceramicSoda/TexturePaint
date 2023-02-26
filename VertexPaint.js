@@ -43,6 +43,12 @@ export class Scene3D{
             // Because screw nested scene structure of three.js!!!
             // Make all your transormations with mesh if needed
             this.mesh.add(...this.#findNestedMesh(gltf.scene.children))
+            let dimensions = new THREE.Vector3();
+            let bounding = new THREE.Box3().setFromObject(this.mesh);
+            bounding.getSize(dimensions);
+            this.mesh.position.y -= dimensions.y/2; 
+            this.controls.minDistance = Math.max(dimensions.x, dimensions.y, dimensions.z)
+            this.controls.maxDistance = this.controls.minDistance*2; 
         })
         
     }
@@ -55,17 +61,11 @@ export class Scene3D{
         this.canvasRoot.appendChild( this.renderer.domElement );
 
         this.#loadMesh();
-        //let boundBox = new THREE.Box3().setFromObject(this.mesh);
-        let size = new THREE.Vector3(20,30,25);
-        //box3.getSize(size);
         
         this.controls.listenToKeyEvents( window );
         this.controls.enablePan = false; 
-        this.controls.minDistance = Math.max(size.x, size.y, size.z);
-        this.controls.maxDistance = this.controls.minDistance*3;
-        this.controls.mouseButtons = {
-            RIGHT: THREE.MOUSE.ROTATE
-        }
+        this.controls.enableDamping = true; 
+        this.controls.mouseButtons = {RIGHT: THREE.MOUSE.ROTATE}
         this.camera.position.set( -32, 8, 64 );
 
         this.scene.add(this.mesh)
@@ -77,6 +77,7 @@ export class Scene3D{
         this.scene.add( light2 );
         const light3 = new THREE.AmbientLight( 0x444444 );
         this.scene.add( light3 );
+        console.log(this.scene);
     }
 
     resize(){
