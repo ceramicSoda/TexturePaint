@@ -1,6 +1,6 @@
 import './reset.css'
 import './style.css'
-import { Scene3D } from './VertexPaint'; 
+import { Scene3D } from './TexturePaint'; 
 
 let scene3D = new Scene3D(document.querySelector("#canvas-wrap"))
 scene3D.init();
