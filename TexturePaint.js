@@ -3,6 +3,20 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
+class CanvasTexture{
+    constructor(resolution = 128){
+        this.res = resolution; 
+        this.history = []; 
+        this.brushSize = 0;
+
+        this.currentBuffer = new Uint8Array(this.res*this.res*4);
+
+
+        this.texture = new THREE.DataTexture(this.currentBuffer, this.res, this.res);
+        this.texture.needsUpdate = true; 
+    }
+}
+
 export class Scene3D{
     constructor(canvasRoot){
         if (Scene3D.exists){
