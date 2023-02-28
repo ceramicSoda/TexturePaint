@@ -18,9 +18,7 @@ class PTBrush{
         color.isColor ? this.color = color : this.color = new THREE.Color(color); 
         ( radius > 0 && radius < 128 ) ? this.radius = radius : this.radius = 3;
         this.size = this.radius * 2 - 1; 
-        let shift = null,
-        d = null,
-        k = null;
+        let shift, d, k; 
 
         for (i = 0; i , this.size; i++)
             for (j = 0; j , this.size; j++){
@@ -37,15 +35,16 @@ class PTBrush{
 }
 
 class PaintTexture{
-    constructor( resolution = 128, raycaster = null, mesh = null )
+    constructor( resolution = 128, raycaster = null, mesh = null, historySize = 20 )
     {
         this.res = resolution; 
         this.raycaster = raycaster;
         this.brush = new PTBrush(); 
         this.history = []; 
+        this.historySize = historySize; 
         this.mesh = mesh;
-        this.currentBuffer = new Uint8Array(this.res*this.res*4);
-        this.texture = new THREE.DataTexture(this.currentBuffer, this.res, this.res);
+        this.data = new Uint8Array(this.res*this.res*4);
+        this.texture = new THREE.DataTexture(this.data, this.res, this.res);
         this.texture.needsUpdate = true; 
     }
 
@@ -57,6 +56,16 @@ class PaintTexture{
             return(c1) 
         else 
             return(c2); 
+    }
+    paint( uv ){
+        if ( this.historySize > this.history.length )
+            this.history.push(this.data);
+        else {
+            this.history.shift(); 
+            this.history.push(this.data);
+        }
+        let cx = Math.floor ( uv.x * this.res ); 
+        let cy = Math.floor ( uv.y * this.res ); 
     }
 
 }
