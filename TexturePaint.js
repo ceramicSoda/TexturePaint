@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-class PTBrush{
+export class PTBrush{
     constructor()
     {
         this.radius         = 3;
@@ -20,8 +20,8 @@ class PTBrush{
         this.size = this.radius * 2 - 1; 
         let shift, d, k; 
 
-        for (i = 0; i , this.size; i++)
-            for (j = 0; j , this.size; j++){
+        for (i = 0; i < this.size; i++)
+            for (j = 0; j < this.size; j++){
                 d = Math.sqrt( Math.pow((i - this.radius), 2) + Math.pow((j - this.radius), 2) );
                 k = d / this.radius;
                 k < 1 ? k = 1 : k = 0; 
@@ -69,12 +69,33 @@ class PaintTexture{
             this.history.push(this.data);
         }
     }
-    #render( uv ){
+    #draw( uv ){
         let cx = Math.floor ( uv.x * this.res ); 
         let cy = Math.floor ( uv.y * this.res ); 
+        let ax = cx - this.brush.radius;
+        let ay = cy - this.brush.radius;
+        let bx = cx + this.brush.radius + 1;
+        let by = cy + this.brush.radius + 1;
+        let shift; 
+
+        for (i = 0; i < this.brush.radius; i++)
+            for (j = 0; j < this.brush.radius; j++){
+                shift = ( i + j * this.brush.size - 1 ) * 4;
+                shift2 = ( i + j * this.brush.size - 1 ) * 4;
+                this.data[shift] = this.#blendBoolColor(this.data[shift], this.brush.buffer[shift])
+            }
     }
-    
+
+    paint( uv ){
+        this.#stage();
+        this.#draw( uv ); 
+    }
 }
+
+
+
+
+
 
 export class Scene3D{
     constructor(canvasRoot){
