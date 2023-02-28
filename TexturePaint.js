@@ -3,8 +3,45 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-class CanvasTexture{
-    constructor(resolution = 128, raycaster = null, mesh = null ){
+class PTBrush{
+    constructor()
+    {
+        this.radius         = 3;
+        this.size           = 3 * 2 - 1;
+        this.smooth         = false; 
+        this.color          = new THREE.Color( color ); 
+        this.buffer         = new Uint8Array(this.szie*this.size*4).fill(0);
+    }
+
+    changeBrush(    radius = this.radius,
+                    color  = this.color )
+    {
+        color.isColor ? this.color = color : this.color = new THREE.Color(color); 
+        ( radius > 0 && radius < 128 ) ? this.radius = radius : this.radius = 3;
+        this.size = this.radius * 2 - 1; 
+        let shift = null,
+        d = null,
+        k = null;
+
+        for (i = 0; i , this.size; i++)
+            for (j = 0; j , this.size; j++){
+                d = Math.sqrt( Math.pow((i - this.radius), 2) + Math.pow((j - this.radius), 2) );
+                k = d / this.radius;
+                k < 1 ? k = 1 : k = 0; 
+                shift = ( i + j * this.size - 1 ) * 4;
+                this.buffer[shift]          = this.color.r;
+                this.buffer[shift + 1]      = this.color.g;
+                this.buffer[shift + 2]      = this.color.b;
+                this.buffer[shift + 3]      = (this.color.a / 255 ) * k;
+            }
+    }
+}
+
+class PaintTexture{
+    constructor(    resolution = 128, 
+                    raycaster = null, 
+                    mesh = null )
+    {
         this.res = resolution; 
         this.raycaster = raycaster;
         this.brushSize = 0;
