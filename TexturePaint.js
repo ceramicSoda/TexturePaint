@@ -57,17 +57,23 @@ class PaintTexture{
         else 
             return(c2); 
     }
-    paint( uv ){
+    undo(){
+        this.data = this.history[this.history.length - 1];
+        this.history.pop();
+    }
+    #stage(){
         if ( this.historySize > this.history.length )
             this.history.push(this.data);
         else {
             this.history.shift(); 
             this.history.push(this.data);
         }
+    }
+    #render( uv ){
         let cx = Math.floor ( uv.x * this.res ); 
         let cy = Math.floor ( uv.y * this.res ); 
     }
-
+    
 }
 
 export class Scene3D{
