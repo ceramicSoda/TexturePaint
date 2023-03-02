@@ -43,9 +43,11 @@ class PaintTexture{
         this.history = []; 
         this.historySize = historySize; 
         this.mesh = mesh;
-        this.data = new Uint8Array(this.res*this.res*4).fill(Math.floor( Math.random() * 255 ));
+        this.data = new Uint8Array(this.res*this.res*4).fill(195);
         this.texture = new THREE.DataTexture(this.data, this.res, this.res);
         this.texture.needsUpdate = true; 
+
+        this.counter = 0;
     }
 
     #blendAlphaColor ( c1 = 0, c2 = 0, a1 = 255, a2 = 255 ){
@@ -70,6 +72,7 @@ class PaintTexture{
         }
     }
     #draw( uv ){
+        this.counter += 1; 
         let cx = Math.floor ( uv.x * this.res ); 
         let cy = Math.floor ( uv.y * this.res ); 
         let ax = cx - this.brush.radius;
@@ -77,6 +80,8 @@ class PaintTexture{
         let bx = cx + this.brush.radius + 1;
         let by = cy + this.brush.radius + 1;
         let shift, shift2; 
+
+        this.data[this.counter] = 255; 
         /*
         for ( let i = 0; i < this.brush.radius; i++)
             for ( let j = 0; j < this.brush.radius; j++){
@@ -86,12 +91,18 @@ class PaintTexture{
                 this.data[shift + 1] = this.#blendBoolColor(this.data[shift + 1], this.brush.buffer[shift2 + 1], this.brush.buffer[shift2 + 3]);
                 this.data[shift + 2] = this.#blendBoolColor(this.data[shift + 2], this.brush.buffer[shift2 + 2], this.brush.buffer[shift2 + 3]);
                 this.data[shift + 3] = this.brush.buffer[shift2 + 3]; 
-            } */
-        for ( let i = ax; i < by; i++)
+            }
+        
+        for ( let i = ax; i < bx; i++)
             for ( let j = ay; j < by; j++){
                 shift2 = ( i + j * this.brush.size - 1 ) * 4;
                 this.data[shift2] = Math.floor( Math.random() * 255 ); 
+                this.data[shift2+1] = Math.floor( Math.random() * 255 ); 
+                this.data[shift2+2] = Math.floor( Math.random() * 255 ); 
             }
+            console.log("shift: " + shift2 );
+
+        */
     }
 
     paint( uv ){
@@ -128,7 +139,7 @@ export class Scene3D{
         this.pointer = new THREE.Vector2();
         // Vertex-paint specific
         this.mesh = new THREE.Group(); 
-        this.pt = new PaintTexture();
+        this.pt = new PaintTexture(256);
     }
     #findNestedMesh(childArray){
         if (childArray[0].type == "Group")
@@ -149,18 +160,21 @@ export class Scene3D{
             let dimensions = new THREE.Vector3();
             let bounding = new THREE.Box3().setFromObject(this.mesh);
             bounding.getSize(dimensions);
-            this.mesh.position.y -= dimensions.y/2; 
+            //this.mesh.position.y -= dimensions.y/2; 
             this.controls.minDistance = Math.max(dimensions.x, dimensions.y, dimensions.z)
             this.controls.maxDistance = this.controls.minDistance*2; 
 
             // REMOVE LATER!!!!
             this.mesh.children[0].material.map = this.pt.texture;
+            this.mesh.children[0].material.map.needsUpdate = true;
+            this.mesh.children[0].material.needsUpdate = true;
             this.pt.brush.changeBrush( 8, 0xffffffff )
         })
         
     }
 
     init(){
+        console.log(this.pt.texture.needsUpdate);
         this.scene.background = new THREE.Color( 0x141417 );
 
         this.renderer.setPixelRatio( window.devicePixelRatio );
@@ -179,10 +193,10 @@ export class Scene3D{
         const light1 = new THREE.DirectionalLight( 0xffffff );
         light1.position.set( 1, 1, 1 );
         this.scene.add( light1 );
-        const light2 = new THREE.DirectionalLight( 0xAA9944 );
+        const light2 = new THREE.DirectionalLight( 0xffffff );
         light2.position.set( - 2, - 2, - 2 );
         this.scene.add( light2 );
-        const light3 = new THREE.AmbientLight( 0x444444 );
+        const light3 = new THREE.AmbientLight( 0xffffff ); ;
         this.scene.add( light3 );
         // Raycasting marker 
         this.marker = new THREE.Mesh(
@@ -190,8 +204,6 @@ export class Scene3D{
             new THREE.MeshBasicMaterial( 0xffffff )
         )  
         this.scene.add(this.marker);
-
-        console.log(this.mesh)
     }
 
     resize(){
@@ -215,11 +227,14 @@ export class Scene3D{
     }
 
     animate() {
-        requestAnimationFrame( this.animate.bind(this) );
+        setTimeout( () => {
+            requestAnimationFrame( this.animate.bind(this) );
+        }, 1000 / 30 );
         this.controls.update();
         this.render();
-        this.pt.paint(Math.random(), Math.random()); 
-        
+        this.pt.paint(new THREE.Vector2(Math.random(), Math.random())); 
+        if (this.mesh.children[0]) 
+            this.mesh.children[0].material.map.needsUpdate = true; 
     }
 
     render() {
