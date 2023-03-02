@@ -10,7 +10,7 @@ export class PTBrush{
         this.size           = 3 * 2 - 1;
         this.smooth         = false; 
         this.color          = new THREE.Color( 0xffffffff ); 
-        this.buffer         = new Uint8Array(this.size*this.size*4).fill(0);
+        this.buffer         = new Uint8Array(this.size*this.size).fill(255);
     }
     changeColor( color = this.color ){
         color.isColor ? this.color = color : this.color = new THREE.Color(color); 
@@ -26,11 +26,8 @@ export class PTBrush{
                 d = Math.sqrt( Math.pow((i - this.radius), 2) + Math.pow((j - this.radius), 2) );
                 k = d / this.radius + 0.05;
                 k < 1 ? k = 1 : k = 0; 
-                shift = ( i + ( j - 1) * this.size - 1 ) * 4;
-                this.buffer[shift]          = Math.floor(this.color.r*255) * k;
-                this.buffer[shift + 1]      = Math.floor(this.color.g*255) * k;
-                this.buffer[shift + 2]      = Math.floor(this.color.b*255) * k;
-                this.buffer[shift + 3]      = Math.floor(k * 255);
+                shift = i + ( j - 1) * this.size - 1;
+                this.buffer[shift]      = Math.floor(k * 255);
             }
             console.log(this)
     }
@@ -39,13 +36,14 @@ export class PTBrush{
 class PaintTexture{
     constructor( resolution = 128, raycaster = null, mesh = null, historySize = 20 )
     {
+        this.onpaint = false; 
         this.res = resolution; 
         this.raycaster = raycaster;
         this.brush = new PTBrush(); 
         this.history = []; 
         this.historySize = historySize; 
         this.mesh = mesh;
-        this.data = new Uint8Array(this.res*this.res*4).fill(0);
+        this.data = new Uint8Array(this.res*this.res*4).fill(128);
         this.texture = new THREE.DataTexture(this.data, this.res, this.res);
         this.texture.needsUpdate = true; 
         this.texture.minFilter = THREE.LinearMipmapLinearFilter;
@@ -62,15 +60,17 @@ class PaintTexture{
             return(c2); 
     }
     undo(){
-        this.data = this.history[this.history.length - 1];
+        this.data = new Uint8Array( this.history[this.history.length - 1] );
+        this.texture = new THREE.DataTexture(this.data, this.res, this.res);
         this.history.pop();
+        this.texture.needsUpdate = true;
     }
-    #stage(){
+    stage(){
         if ( this.historySize > this.history.length )
-            this.history.push(this.data);
+            this.history.push(new Uint8Array( this.data ));
         else {
             this.history.shift(); 
-            this.history.push(this.data);
+            this.history.push(new Uint8Array( this.data ));
         }
     }
     #draw( uv ){
@@ -84,12 +84,12 @@ class PaintTexture{
         for ( let i = 1; i < this.brush.size + 1; i++)
             for ( let j = 1; j < this.brush.size + 1; j++){
                 shift = ( ( i + ax - 1 ) + ( j + ay - 1 )  * this.res - 1  ) * 4; 
-                shift2 = ( i - 1 + (j - 1) * this.brush.size ) * 4;
+                shift2 = i - 1 + (j - 1) * this.brush.size;
                 
-                this.data[shift] = this.#blendBoolColor(this.data[shift], this.brush.buffer[shift2], this.brush.buffer[shift2 + 3]);
-                this.data[shift + 1] = this.#blendBoolColor(this.data[shift + 1], this.brush.buffer[shift2 + 1], this.brush.buffer[shift2 + 3]);
-                this.data[shift + 2] = this.#blendBoolColor(this.data[shift + 2], this.brush.buffer[shift2 + 2], this.brush.buffer[shift2 + 3]);
-                this.data[shift + 3] = this.brush.buffer[shift2 + 3]; 
+                this.data[shift] = this.#blendBoolColor(this.data[shift], this.brush.color.r*255, this.brush.buffer[shift2]);
+                this.data[shift + 1] = this.#blendBoolColor(this.data[shift + 1], this.brush.color.g*255, this.brush.buffer[shift2]);
+                this.data[shift + 2] = this.#blendBoolColor(this.data[shift + 2], this.brush.color.b*255, this.brush.buffer[shift2]);
+                this.data[shift + 3] = this.brush.buffer[shift2]; 
                 
                 //this.data[shift] = this.brush.buffer[shift2];
                 //this.data[shift + 1] = this.brush.buffer[shift2 + 1];
@@ -133,7 +133,8 @@ export class Scene3D{
         this.pointer = new THREE.Vector2();
         // Vertex-paint specific
         this.mesh = new THREE.Group(); 
-        this.pt = new PaintTexture(256);
+        this.mesh.position.y = -15;
+        this.pt = new PaintTexture(512);
     }
     #findNestedMesh(childArray){
         if (childArray[0].type == "Group")
@@ -192,7 +193,7 @@ export class Scene3D{
         this.scene.add( light3 );
         // Raycasting marker 
         this.marker = new THREE.Mesh(
-            new THREE.SphereGeometry(1, 16, 8 ), 
+            new THREE.SphereGeometry(.01, 16, 8 ), 
             new THREE.MeshBasicMaterial( 0xffffff )
         )  
         this.scene.add(this.marker);
@@ -209,20 +210,29 @@ export class Scene3D{
         this.pointer.y = - (e.clientY / window.innerHeight) * 2 + 1;
     }   
     rayMouseUp(e) {
-        //if (e.button == 0) 
+        if (e.button == 0) 
+            this.pt.onpaint = false; 
     }
     rayMouseDown(e){
         if (e.button == 0) {
-            if (this.intersects[0]){
-                this.pt.paint(this.intersects[0].uv); 
-            }
+            this.pt.stage(); 
+            this.pt.brush.changeColor( new THREE.Color(Math.random()*128+64, Math.random()*128+64, Math.random()*128+64) );
+            this.pt.onpaint = true; 
         }
+    }
+    keyUndo(e){
+        if (e.keyCode == 90 && e.ctrlKey == true )
+            console.log(this.pt.history)
+            this.pt.undo();
     }
 
     animate() {
         requestAnimationFrame( this.animate.bind(this) );
         this.controls.update();
         this.render();
+        if (this.intersects[0] && this.pt.onpaint){
+            this.pt.paint(this.intersects[0].uv); 
+        }
     }
 
     render() {
