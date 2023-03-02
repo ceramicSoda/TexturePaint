@@ -12,10 +12,11 @@ export class PTBrush{
         this.color          = new THREE.Color( 0xffffffff ); 
         this.buffer         = new Uint8Array(this.size*this.size*4).fill(0);
     }
-
-    changeBrush( radius = this.radius, color  = this.color )
-    {
+    changeColor( color = this.color ){
         color.isColor ? this.color = color : this.color = new THREE.Color(color); 
+    }
+    changeBrush( radius = this.radius )
+    {
         ( radius > 0 && radius < 128 ) ? this.radius = radius : this.radius = 3;
         this.size = this.radius * 2 - 1; 
         let shift, d, k; 
@@ -29,7 +30,7 @@ export class PTBrush{
                 this.buffer[shift]          = Math.floor(this.color.r*255) * k;
                 this.buffer[shift + 1]      = Math.floor(this.color.g*255) * k;
                 this.buffer[shift + 2]      = Math.floor(this.color.b*255) * k;
-                this.buffer[shift + 3]      = Math.floor(this.color.a*255) * k;
+                this.buffer[shift + 3]      = Math.floor(k * 255);
             }
             console.log(this)
     }
@@ -44,9 +45,11 @@ class PaintTexture{
         this.history = []; 
         this.historySize = historySize; 
         this.mesh = mesh;
-        this.data = new Uint8Array(this.res*this.res*4).fill(195);
+        this.data = new Uint8Array(this.res*this.res*4).fill(0);
         this.texture = new THREE.DataTexture(this.data, this.res, this.res);
         this.texture.needsUpdate = true; 
+        this.texture.minFilter = THREE.LinearMipmapLinearFilter;
+        this.texture.magFilter = THREE.LinearFilter;
     }
 
     #blendAlphaColor ( c1 = 0, c2 = 0, a1 = 255, a2 = 255 ){
@@ -78,17 +81,21 @@ class PaintTexture{
         let shift, shift2; 
 
     
-        for ( let i = 0; i < this.brush.radius; i++)
-            for ( let j = 0; j < this.brush.radius; j++){
-                shift = ( ( i + cx ) + ( j + cy )  * this.res - 1  ) * 4; 
-                shift2 = ( i + j * this.brush.size - 1 ) * 4;
+        for ( let i = 1; i < this.brush.size + 1; i++)
+            for ( let j = 1; j < this.brush.size + 1; j++){
+                shift = ( ( i + ax - 1 ) + ( j + ay - 1 )  * this.res - 1  ) * 4; 
+                shift2 = ( i - 1 + (j - 1) * this.brush.size ) * 4;
+                
                 this.data[shift] = this.#blendBoolColor(this.data[shift], this.brush.buffer[shift2], this.brush.buffer[shift2 + 3]);
                 this.data[shift + 1] = this.#blendBoolColor(this.data[shift + 1], this.brush.buffer[shift2 + 1], this.brush.buffer[shift2 + 3]);
                 this.data[shift + 2] = this.#blendBoolColor(this.data[shift + 2], this.brush.buffer[shift2 + 2], this.brush.buffer[shift2 + 3]);
                 this.data[shift + 3] = this.brush.buffer[shift2 + 3]; 
-            }
-        
-      
+                
+                //this.data[shift] = this.brush.buffer[shift2];
+                //this.data[shift + 1] = this.brush.buffer[shift2 + 1];
+                //this.data[shift + 2] = this.brush.buffer[shift2 + 2];
+                //this.data[shift + 3] = this.brush.buffer[shift2 + 3]; 
+            } 
         this.texture.needsUpdate = true; 
     }
 
@@ -152,8 +159,9 @@ export class Scene3D{
             this.controls.maxDistance = this.controls.minDistance*2; 
 
             // REMOVE LATER!!!!
-            this.pt.brush.changeBrush( 16, 0xffffffff )
+            this.pt.brush.changeBrush( 9, 0xffffffff )
             this.mesh.children[0].material.map = this.pt.texture;
+            console.log(this.mesh);
         })
         
     }
@@ -204,10 +212,10 @@ export class Scene3D{
         //if (e.button == 0) 
     }
     rayMouseDown(e){
-        //if (e.button == 0) console.log(this.intersects    0])
         if (e.button == 0) {
-            if (this.intersects[0].uv)
+            if (this.intersects[0]){
                 this.pt.paint(this.intersects[0].uv); 
+            }
         }
     }
 
@@ -215,9 +223,6 @@ export class Scene3D{
         requestAnimationFrame( this.animate.bind(this) );
         this.controls.update();
         this.render();
-        
-        //if (this.mesh.children[0]) 
-          //  this.mesh.children[0].material.map.needsUpdate = true; 
     }
 
     render() {
