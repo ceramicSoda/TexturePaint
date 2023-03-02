@@ -45,9 +45,6 @@ class PaintTexture{
         this.mesh = mesh;
         this.data = new Uint8Array(this.res*this.res*4).fill(195);
         this.texture = new THREE.DataTexture(this.data, this.res, this.res);
-        this.texture.needsUpdate = true; 
-
-        this.counter = 0;
     }
 
     #blendAlphaColor ( c1 = 0, c2 = 0, a1 = 255, a2 = 255 ){
@@ -72,7 +69,6 @@ class PaintTexture{
         }
     }
     #draw( uv ){
-        this.counter += 1; 
         let cx = Math.floor ( uv.x * this.res ); 
         let cy = Math.floor ( uv.y * this.res ); 
         let ax = cx - this.brush.radius;
@@ -80,8 +76,6 @@ class PaintTexture{
         let bx = cx + this.brush.radius + 1;
         let by = cy + this.brush.radius + 1;
         let shift, shift2; 
-
-        this.data[this.counter] = 255; 
         /*
         for ( let i = 0; i < this.brush.radius; i++)
             for ( let j = 0; j < this.brush.radius; j++){
@@ -92,17 +86,16 @@ class PaintTexture{
                 this.data[shift + 2] = this.#blendBoolColor(this.data[shift + 2], this.brush.buffer[shift2 + 2], this.brush.buffer[shift2 + 3]);
                 this.data[shift + 3] = this.brush.buffer[shift2 + 3]; 
             }
-        
+        */
         for ( let i = ax; i < bx; i++)
             for ( let j = ay; j < by; j++){
                 shift2 = ( i + j * this.brush.size - 1 ) * 4;
-                this.data[shift2] = Math.floor( Math.random() * 255 ); 
-                this.data[shift2+1] = Math.floor( Math.random() * 255 ); 
-                this.data[shift2+2] = Math.floor( Math.random() * 255 ); 
+                this.data[shift2] = Math.floor( 255 ); 
+                this.data[shift2+1] = Math.floor( 64 ); 
+                this.data[shift2+2] = Math.floor( 192 ); 
             }
             console.log("shift: " + shift2 );
-
-        */
+        this.texture.needsUpdate = true; 
     }
 
     paint( uv ){
@@ -139,7 +132,7 @@ export class Scene3D{
         this.pointer = new THREE.Vector2();
         // Vertex-paint specific
         this.mesh = new THREE.Group(); 
-        this.pt = new PaintTexture(256);
+        this.pt = new PaintTexture(16);
     }
     #findNestedMesh(childArray){
         if (childArray[0].type == "Group")
@@ -166,15 +159,12 @@ export class Scene3D{
 
             // REMOVE LATER!!!!
             this.mesh.children[0].material.map = this.pt.texture;
-            this.mesh.children[0].material.map.needsUpdate = true;
-            this.mesh.children[0].material.needsUpdate = true;
             this.pt.brush.changeBrush( 8, 0xffffffff )
         })
         
     }
 
     init(){
-        console.log(this.pt.texture.needsUpdate);
         this.scene.background = new THREE.Color( 0x141417 );
 
         this.renderer.setPixelRatio( window.devicePixelRatio );
@@ -233,8 +223,8 @@ export class Scene3D{
         this.controls.update();
         this.render();
         this.pt.paint(new THREE.Vector2(Math.random(), Math.random())); 
-        if (this.mesh.children[0]) 
-            this.mesh.children[0].material.map.needsUpdate = true; 
+        //if (this.mesh.children[0]) 
+          //  this.mesh.children[0].material.map.needsUpdate = true; 
     }
 
     render() {
