@@ -73,28 +73,19 @@ class PaintTexture{
         let cy = Math.floor ( uv.y * this.res ); 
         let ax = cx - this.brush.radius;
         let ay = cy - this.brush.radius;
-        let bx = cx + this.brush.radius + 1;
-        let by = cy + this.brush.radius + 1;
         let shift, shift2; 
-        /*
+    
         for ( let i = 0; i < this.brush.radius; i++)
             for ( let j = 0; j < this.brush.radius; j++){
-                shift = ( ( i + ax ) + ( j + ay )  * this.brush.size - 1  ) * 4; 
+                shift = ( ( i + ax ) + ( j + ay )  * this.res - 1  ) * 4; 
                 shift2 = ( i + j * this.brush.size - 1 ) * 4;
                 this.data[shift] = this.#blendBoolColor(this.data[shift], this.brush.buffer[shift2], this.brush.buffer[shift2 + 3]);
                 this.data[shift + 1] = this.#blendBoolColor(this.data[shift + 1], this.brush.buffer[shift2 + 1], this.brush.buffer[shift2 + 3]);
                 this.data[shift + 2] = this.#blendBoolColor(this.data[shift + 2], this.brush.buffer[shift2 + 2], this.brush.buffer[shift2 + 3]);
                 this.data[shift + 3] = this.brush.buffer[shift2 + 3]; 
             }
-        */
-        for ( let i = ax; i < bx; i++)
-            for ( let j = ay; j < by; j++){
-                shift2 = ( i + j * this.brush.size - 1 ) * 4;
-                this.data[shift2] = Math.floor( 255 ); 
-                this.data[shift2+1] = Math.floor( 64 ); 
-                this.data[shift2+2] = Math.floor( 192 ); 
-            }
-            console.log("shift: " + shift2 );
+        
+      
         this.texture.needsUpdate = true; 
     }
 
@@ -132,7 +123,7 @@ export class Scene3D{
         this.pointer = new THREE.Vector2();
         // Vertex-paint specific
         this.mesh = new THREE.Group(); 
-        this.pt = new PaintTexture(16);
+        this.pt = new PaintTexture(256);
     }
     #findNestedMesh(childArray){
         if (childArray[0].type == "Group")
@@ -212,17 +203,16 @@ export class Scene3D{
     rayMouseDown(e){
         //if (e.button == 0) console.log(this.intersects    0])
         if (e.button == 0) {
-            
+            if (this.intersects[0].uv)
+                this.pt.paint(this.intersects[0].uv); 
         }
     }
 
     animate() {
-        setTimeout( () => {
-            requestAnimationFrame( this.animate.bind(this) );
-        }, 1000 / 30 );
+        requestAnimationFrame( this.animate.bind(this) );
         this.controls.update();
         this.render();
-        this.pt.paint(new THREE.Vector2(Math.random(), Math.random())); 
+        
         //if (this.mesh.children[0]) 
           //  this.mesh.children[0].material.map.needsUpdate = true; 
     }
