@@ -9,8 +9,8 @@ export class PTBrush{
         this.radius         = 3;
         this.size           = 3 * 2 - 1;
         this.smooth         = false; 
-        this.color          = new THREE.Color( color ); 
-        this.buffer         = new Uint8Array(this.szie*this.size*4).fill(0);
+        this.color          = new THREE.Color( 0x000000ff ); 
+        this.buffer         = new Uint8Array(this.size*this.size*4).fill(0);
     }
 
     changeBrush( radius = this.radius, color  = this.color )
@@ -20,8 +20,8 @@ export class PTBrush{
         this.size = this.radius * 2 - 1; 
         let shift, d, k; 
 
-        for (i = 0; i < this.size; i++)
-            for (j = 0; j < this.size; j++){
+        for ( let i = 0; i < this.size; i++)
+            for ( let j = 0; j < this.size; j++){
                 d = Math.sqrt( Math.pow((i - this.radius), 2) + Math.pow((j - this.radius), 2) );
                 k = d / this.radius;
                 k < 1 ? k = 1 : k = 0; 
@@ -43,7 +43,7 @@ class PaintTexture{
         this.history = []; 
         this.historySize = historySize; 
         this.mesh = mesh;
-        this.data = new Uint8Array(this.res*this.res*4);
+        this.data = new Uint8Array(this.res*this.res*4).fill(Math.floor( Math.random() * 255 ));
         this.texture = new THREE.DataTexture(this.data, this.res, this.res);
         this.texture.needsUpdate = true; 
     }
@@ -76,18 +76,26 @@ class PaintTexture{
         let ay = cy - this.brush.radius;
         let bx = cx + this.brush.radius + 1;
         let by = cy + this.brush.radius + 1;
-        let shift; 
-
-        for (i = 0; i < this.brush.radius; i++)
-            for (j = 0; j < this.brush.radius; j++){
-                shift = ( i + j * this.brush.size - 1 ) * 4;
+        let shift, shift2; 
+        /*
+        for ( let i = 0; i < this.brush.radius; i++)
+            for ( let j = 0; j < this.brush.radius; j++){
+                shift = ( ( i + ax ) + ( j + ay )  * this.brush.size - 1  ) * 4; 
                 shift2 = ( i + j * this.brush.size - 1 ) * 4;
-                this.data[shift] = this.#blendBoolColor(this.data[shift], this.brush.buffer[shift])
+                this.data[shift] = this.#blendBoolColor(this.data[shift], this.brush.buffer[shift2], this.brush.buffer[shift2 + 3]);
+                this.data[shift + 1] = this.#blendBoolColor(this.data[shift + 1], this.brush.buffer[shift2 + 1], this.brush.buffer[shift2 + 3]);
+                this.data[shift + 2] = this.#blendBoolColor(this.data[shift + 2], this.brush.buffer[shift2 + 2], this.brush.buffer[shift2 + 3]);
+                this.data[shift + 3] = this.brush.buffer[shift2 + 3]; 
+            } */
+        for ( let i = ax; i < by; i++)
+            for ( let j = ay; j < by; j++){
+                shift2 = ( i + j * this.brush.size - 1 ) * 4;
+                this.data[shift2] = Math.floor( Math.random() * 255 ); 
             }
     }
 
     paint( uv ){
-        this.#stage();
+        //this.#stage();
         this.#draw( uv ); 
     }
 }
@@ -113,16 +121,14 @@ export class Scene3D{
         
         this.loader = new GLTFLoader(); 
         this.dracoLoader = new DRACOLoader();
-        this.gltfPath = "assets/dog.glb"; 
+        this.gltfPath = "assets/test.glb"; 
 
         this.raycaster = new THREE.Raycaster(); 
         this.intersects = null; 
         this.pointer = new THREE.Vector2();
         // Vertex-paint specific
         this.mesh = new THREE.Group(); 
-        this.paintHistory = [];
-        this.vertexColor = []; 
-        this.baseColor = [1,1,1];
+        this.pt = new PaintTexture();
     }
     #findNestedMesh(childArray){
         if (childArray[0].type == "Group")
@@ -146,6 +152,10 @@ export class Scene3D{
             this.mesh.position.y -= dimensions.y/2; 
             this.controls.minDistance = Math.max(dimensions.x, dimensions.y, dimensions.z)
             this.controls.maxDistance = this.controls.minDistance*2; 
+
+            // REMOVE LATER!!!!
+            this.mesh.children[0].material.map = this.pt.texture;
+            this.pt.brush.changeBrush( 8, 0xffffffff )
         })
         
     }
@@ -208,6 +218,7 @@ export class Scene3D{
         requestAnimationFrame( this.animate.bind(this) );
         this.controls.update();
         this.render();
+        this.pt.paint(Math.random(), Math.random()); 
         
     }
 
