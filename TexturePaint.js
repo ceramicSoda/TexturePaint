@@ -9,7 +9,7 @@ export class PTBrush{
         this.radius         = 3;
         this.size           = 3 * 2 - 1;
         this.smooth         = false; 
-        this.color          = new THREE.Color( 0x000000ff ); 
+        this.color          = new THREE.Color( 0xffffffff ); 
         this.buffer         = new Uint8Array(this.size*this.size*4).fill(0);
     }
 
@@ -19,18 +19,19 @@ export class PTBrush{
         ( radius > 0 && radius < 128 ) ? this.radius = radius : this.radius = 3;
         this.size = this.radius * 2 - 1; 
         let shift, d, k; 
-
-        for ( let i = 0; i < this.size; i++)
-            for ( let j = 0; j < this.size; j++){
+        this.buffer = new Uint8Array(this.size*this.size*4).fill(0);
+        for ( let i = 1; i < this.size + 1; i++)
+            for ( let j = 1; j < this.size + 1; j++){
                 d = Math.sqrt( Math.pow((i - this.radius), 2) + Math.pow((j - this.radius), 2) );
-                k = d / this.radius;
+                k = d / this.radius + 0.05;
                 k < 1 ? k = 1 : k = 0; 
-                shift = ( i + j * this.size - 1 ) * 4;
-                this.buffer[shift]          = this.color.r;
-                this.buffer[shift + 1]      = this.color.g;
-                this.buffer[shift + 2]      = this.color.b;
-                this.buffer[shift + 3]      = (this.color.a / 255 ) * k;
+                shift = ( i + ( j - 1) * this.size - 1 ) * 4;
+                this.buffer[shift]          = Math.floor(this.color.r*255) * k;
+                this.buffer[shift + 1]      = Math.floor(this.color.g*255) * k;
+                this.buffer[shift + 2]      = Math.floor(this.color.b*255) * k;
+                this.buffer[shift + 3]      = Math.floor(this.color.a*255) * k;
             }
+            console.log(this)
     }
 }
 
@@ -45,6 +46,7 @@ class PaintTexture{
         this.mesh = mesh;
         this.data = new Uint8Array(this.res*this.res*4).fill(195);
         this.texture = new THREE.DataTexture(this.data, this.res, this.res);
+        this.texture.needsUpdate = true; 
     }
 
     #blendAlphaColor ( c1 = 0, c2 = 0, a1 = 255, a2 = 255 ){
@@ -74,10 +76,11 @@ class PaintTexture{
         let ax = cx - this.brush.radius;
         let ay = cy - this.brush.radius;
         let shift, shift2; 
+
     
         for ( let i = 0; i < this.brush.radius; i++)
             for ( let j = 0; j < this.brush.radius; j++){
-                shift = ( ( i + ax ) + ( j + ay )  * this.res - 1  ) * 4; 
+                shift = ( ( i + cx ) + ( j + cy )  * this.res - 1  ) * 4; 
                 shift2 = ( i + j * this.brush.size - 1 ) * 4;
                 this.data[shift] = this.#blendBoolColor(this.data[shift], this.brush.buffer[shift2], this.brush.buffer[shift2 + 3]);
                 this.data[shift + 1] = this.#blendBoolColor(this.data[shift + 1], this.brush.buffer[shift2 + 1], this.brush.buffer[shift2 + 3]);
@@ -149,8 +152,8 @@ export class Scene3D{
             this.controls.maxDistance = this.controls.minDistance*2; 
 
             // REMOVE LATER!!!!
+            this.pt.brush.changeBrush( 16, 0xffffffff )
             this.mesh.children[0].material.map = this.pt.texture;
-            this.pt.brush.changeBrush( 8, 0xffffffff )
         })
         
     }
