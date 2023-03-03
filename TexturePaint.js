@@ -2,34 +2,32 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
-class PTBrush{
+//123123
+export class PTBrush{
     constructor()
     {
         this.radius         = 3;
         this.size           = 3 * 2 - 1;
         this.smooth         = false; 
-        this.color          = new THREE.Color( color ); 
-        this.buffer         = new Uint8Array(this.szie*this.size*4).fill(0);
+        this.color          = new THREE.Color( 0xffffffff ); 
+        this.buffer         = new Uint8Array(this.size*this.size).fill(255);
     }
-
-    changeBrush( radius = this.radius, color  = this.color )
-    {
+    changeColor( color = this.color ){
         color.isColor ? this.color = color : this.color = new THREE.Color(color); 
+    }
+    changeBrush( radius = this.radius )
+    {
         ( radius > 0 && radius < 128 ) ? this.radius = radius : this.radius = 3;
         this.size = this.radius * 2 - 1; 
         let shift, d, k; 
-
-        for (i = 0; i , this.size; i++)
-            for (j = 0; j , this.size; j++){
+        this.buffer = new Uint8Array(this.size*this.size*4).fill(0);
+        for ( let i = 1; i < this.size + 1; i++)
+            for ( let j = 1; j < this.size + 1; j++){
                 d = Math.sqrt( Math.pow((i - this.radius), 2) + Math.pow((j - this.radius), 2) );
-                k = d / this.radius;
+                k = d / this.radius + 0.05;
                 k < 1 ? k = 1 : k = 0; 
-                shift = ( i + j * this.size - 1 ) * 4;
-                this.buffer[shift]          = this.color.r;
-                this.buffer[shift + 1]      = this.color.g;
-                this.buffer[shift + 2]      = this.color.b;
-                this.buffer[shift + 3]      = (this.color.a / 255 ) * k;
+                shift = i + ( j - 1) * this.size - 1;
+                this.buffer[shift]      = Math.floor(k * 255);
             }
     }
 }
@@ -37,15 +35,18 @@ class PTBrush{
 class PaintTexture{
     constructor( resolution = 128, raycaster = null, mesh = null, historySize = 20 )
     {
+        this.onpaint = false; 
         this.res = resolution; 
         this.raycaster = raycaster;
         this.brush = new PTBrush(); 
         this.history = []; 
         this.historySize = historySize; 
         this.mesh = mesh;
-        this.data = new Uint8Array(this.res*this.res*4);
+        this.data = new Uint8Array(this.res*this.res*4).fill(128);
         this.texture = new THREE.DataTexture(this.data, this.res, this.res);
         this.texture.needsUpdate = true; 
+        this.texture.minFilter = THREE.LinearMipmapLinearFilter;
+        this.texture.magFilter = THREE.LinearFilter;
     }
 
     #blendAlphaColor ( c1 = 0, c2 = 0, a1 = 255, a2 = 255 ){
@@ -58,23 +59,50 @@ class PaintTexture{
             return(c2); 
     }
     undo(){
-        this.data = this.history[this.history.length - 1];
+        this.data = new Uint8Array( this.history[this.history.length - 1] );
+        this.texture = new THREE.DataTexture(this.data, this.res, this.res);
         this.history.pop();
+        this.texture.needsUpdate = true;
     }
-    #stage(){
+    stage(){
         if ( this.historySize > this.history.length )
-            this.history.push(this.data);
+            this.history.push(new Uint8Array( this.data ));
         else {
             this.history.shift(); 
-            this.history.push(this.data);
+            this.history.push(new Uint8Array( this.data ));
         }
     }
-    #render( uv ){
+    #draw( uv ){
         let cx = Math.floor ( uv.x * this.res ); 
         let cy = Math.floor ( uv.y * this.res ); 
-    }
+        let ax = cx - this.brush.radius;
+        let ay = cy - this.brush.radius;
+        let shift, shift2; 
+
     
+        for ( let i = 1; i < this.brush.size + 1; i++)
+            for ( let j = 1; j < this.brush.size + 1; j++){
+                shift = ( ( i + ax - 1 ) + ( j + ay - 1 )  * this.res - 1  ) * 4; 
+                shift2 = i - 1 + (j - 1) * this.brush.size;
+                
+                this.data[shift]     = this.#blendBoolColor(this.data[shift], this.brush.color.r*255, this.brush.buffer[shift2]);
+                this.data[shift + 1] = this.#blendBoolColor(this.data[shift + 1], this.brush.color.g*255, this.brush.buffer[shift2]);
+                this.data[shift + 2] = this.#blendBoolColor(this.data[shift + 2], this.brush.color.b*255, this.brush.buffer[shift2]);
+                this.data[shift + 3] = this.brush.buffer[shift2]; 
+            } 
+        this.texture.needsUpdate = true; 
+    }
+
+    paint( uv ){
+        //this.#stage();
+        this.#draw( uv ); 
+    }
 }
+
+
+
+
+
 
 export class Scene3D{
     constructor(canvasRoot){
@@ -92,16 +120,14 @@ export class Scene3D{
         
         this.loader = new GLTFLoader(); 
         this.dracoLoader = new DRACOLoader();
-        this.gltfPath = "assets/dog.glb"; 
+        this.gltfPath = "assets/test.glb"; 
 
         this.raycaster = new THREE.Raycaster(); 
         this.intersects = null; 
         this.pointer = new THREE.Vector2();
         // Vertex-paint specific
         this.mesh = new THREE.Group(); 
-        this.paintHistory = [];
-        this.vertexColor = []; 
-        this.baseColor = [1,1,1];
+        this.pt = new PaintTexture(512);
     }
     #findNestedMesh(childArray){
         if (childArray[0].type == "Group")
@@ -122,9 +148,13 @@ export class Scene3D{
             let dimensions = new THREE.Vector3();
             let bounding = new THREE.Box3().setFromObject(this.mesh);
             bounding.getSize(dimensions);
-            this.mesh.position.y -= dimensions.y/2; 
+            //this.mesh.position.y -= dimensions.y/2; 
             this.controls.minDistance = Math.max(dimensions.x, dimensions.y, dimensions.z)
             this.controls.maxDistance = this.controls.minDistance*2; 
+
+            // REMOVE LATER!!!!
+            this.pt.brush.changeBrush( 9, 0xffffffff )
+            this.mesh.children[0].material.map = this.pt.texture;
         })
         
     }
@@ -148,19 +178,17 @@ export class Scene3D{
         const light1 = new THREE.DirectionalLight( 0xffffff );
         light1.position.set( 1, 1, 1 );
         this.scene.add( light1 );
-        const light2 = new THREE.DirectionalLight( 0xAA9944 );
+        const light2 = new THREE.DirectionalLight( 0xffffff );
         light2.position.set( - 2, - 2, - 2 );
         this.scene.add( light2 );
-        const light3 = new THREE.AmbientLight( 0x444444 );
+        const light3 = new THREE.AmbientLight( 0xffffff ); ;
         this.scene.add( light3 );
         // Raycasting marker 
         this.marker = new THREE.Mesh(
-            new THREE.SphereGeometry(1, 16, 8 ), 
+            new THREE.SphereGeometry(.01, 16, 8 ), 
             new THREE.MeshBasicMaterial( 0xffffff )
         )  
         this.scene.add(this.marker);
-
-        console.log(this.mesh)
     }
 
     resize(){
@@ -174,20 +202,33 @@ export class Scene3D{
         this.pointer.y = - (e.clientY / window.innerHeight) * 2 + 1;
     }   
     rayMouseUp(e) {
-        //if (e.button == 0) 
+        if (e.button == 0) 
+            this.pt.onpaint = false; 
     }
     rayMouseDown(e){
-        //if (e.button == 0) console.log(this.intersects    0])
         if (e.button == 0) {
-            
+            this.pt.stage(); 
+            this.pt.brush.changeColor( new THREE.Color(Math.random()*128+64, Math.random()*128+64, Math.random()*128+64) );
+            this.pt.onpaint = true; 
         }
+    }
+    keyUndo(e){
+        if (e.keyCode == 90 && e.ctrlKey == true )
+            this.pt.undo();
+        if (e.keyCode == 219 )
+            this.pt.brush.changeBrush(this.pt.brush.radius-3);
+            if (e.keyCode == 221 )
+            this.pt.brush.changeBrush(this.pt.brush.radius+3);
+        //if (e.keyCode == )
     }
 
     animate() {
         requestAnimationFrame( this.animate.bind(this) );
         this.controls.update();
         this.render();
-        
+        if (this.intersects[0] && this.pt.onpaint){
+            this.pt.paint(this.intersects[0].uv); 
+        }
     }
 
     render() {
