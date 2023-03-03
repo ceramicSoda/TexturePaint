@@ -29,7 +29,6 @@ export class PTBrush{
                 shift = i + ( j - 1) * this.size - 1;
                 this.buffer[shift]      = Math.floor(k * 255);
             }
-            console.log(this)
     }
 }
 
@@ -86,15 +85,10 @@ class PaintTexture{
                 shift = ( ( i + ax - 1 ) + ( j + ay - 1 )  * this.res - 1  ) * 4; 
                 shift2 = i - 1 + (j - 1) * this.brush.size;
                 
-                this.data[shift] = this.#blendBoolColor(this.data[shift], this.brush.color.r*255, this.brush.buffer[shift2]);
+                this.data[shift]     = this.#blendBoolColor(this.data[shift], this.brush.color.r*255, this.brush.buffer[shift2]);
                 this.data[shift + 1] = this.#blendBoolColor(this.data[shift + 1], this.brush.color.g*255, this.brush.buffer[shift2]);
                 this.data[shift + 2] = this.#blendBoolColor(this.data[shift + 2], this.brush.color.b*255, this.brush.buffer[shift2]);
                 this.data[shift + 3] = this.brush.buffer[shift2]; 
-                
-                //this.data[shift] = this.brush.buffer[shift2];
-                //this.data[shift + 1] = this.brush.buffer[shift2 + 1];
-                //this.data[shift + 2] = this.brush.buffer[shift2 + 2];
-                //this.data[shift + 3] = this.brush.buffer[shift2 + 3]; 
             } 
         this.texture.needsUpdate = true; 
     }
@@ -133,7 +127,6 @@ export class Scene3D{
         this.pointer = new THREE.Vector2();
         // Vertex-paint specific
         this.mesh = new THREE.Group(); 
-        this.mesh.position.y = -15;
         this.pt = new PaintTexture(512);
     }
     #findNestedMesh(childArray){
@@ -162,7 +155,6 @@ export class Scene3D{
             // REMOVE LATER!!!!
             this.pt.brush.changeBrush( 9, 0xffffffff )
             this.mesh.children[0].material.map = this.pt.texture;
-            console.log(this.mesh);
         })
         
     }
@@ -222,8 +214,12 @@ export class Scene3D{
     }
     keyUndo(e){
         if (e.keyCode == 90 && e.ctrlKey == true )
-            console.log(this.pt.history)
             this.pt.undo();
+        if (e.keyCode == 219 )
+            this.pt.brush.changeBrush(this.pt.brush.radius-3);
+            if (e.keyCode == 221 )
+            this.pt.brush.changeBrush(this.pt.brush.radius+3);
+        //if (e.keyCode == )
     }
 
     animate() {
