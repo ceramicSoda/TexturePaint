@@ -3,12 +3,12 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 //123123
-export class PTBrush{
-    constructor()
+class PTBrush{
+    constructor(radius = 5, smooth = true)
     {
-        this.radius         = 3;
-        this.size           = 3 * 2 - 1;
-        this.smooth         = false; 
+        this.radius         = radius;
+        this.size           = radius * 2 - 1;
+        this.smooth         = smooth; 
         this.color          = new THREE.Color( 0xffffffff ); 
         this.buffer         = new Uint8Array(this.size*this.size).fill(255);
     }
@@ -35,33 +35,27 @@ export class PTBrush{
 class PaintTexture{
     constructor( resolution = 128, raycaster = null, mesh = null, historySize = 20 )
     {
-        this.onpaint = false; 
-        this.res = resolution; 
-        this.raycaster = raycaster;
-        this.brush = new PTBrush(); 
-        this.history = []; 
-        this.historySize = historySize; 
-        this.mesh = mesh;
-        this.data = new Uint8Array(this.res*this.res*4).fill(128);
-        this.texture = new THREE.DataTexture(this.data, this.res, this.res);
-        this.texture.needsUpdate = true; 
-        this.texture.minFilter = THREE.LinearMipmapLinearFilter;
-        this.texture.magFilter = THREE.LinearFilter;
-    }
-
-    #blendAlphaColor ( c1 = 0, c2 = 0, a1 = 255, a2 = 255 ){
-        return (c1 * a1 / 255) + (c2 * a2 * (255 - a1) / (255*255));
-    }
-    #blendBoolColor  ( c1 = 0, c2 = 0, a2 = 255 ){
-        if (!a2) 
-            return(c1) 
-        else 
-            return(c2); 
+        this.onpaint                = false; 
+        this.res                    = resolution; 
+        this.brush                  = new PTBrush(); 
+        this.raycaster              = raycaster;
+        this.mesh                   = mesh;
+        this.marker                 = null; 
+        this.data                   = new Uint8Array(this.res*this.res*4).fill(128);
+        this.texture                = new THREE.DataTexture(this.data, this.res, this.res);
+        this.texture.needsUpdate    = true; 
+        this.texture.minFilter      = THREE.LinearMipmapLinearFilter;
+        this.texture.magFilter      = THREE.LinearFilter;
+        this.history                = [];
+        this.historySize            = historySize; 
+        this.history.push(this.data); 
     }
     undo(){
-        this.data = new Uint8Array( this.history[this.history.length - 1] );
-        this.texture = new THREE.DataTexture(this.data, this.res, this.res);
         this.history.pop();
+        // three js will broke if we'll try to just equate data to history[last] for reasons
+        if (this.history[0])
+            for (let i = 0; i < this.data.length; i++ )
+                this.data[i] = this.history[this.history.length - 1][i];
         this.texture.needsUpdate = true;
     }
     stage(){
@@ -72,19 +66,33 @@ class PaintTexture{
             this.history.push(new Uint8Array( this.data ));
         }
     }
+    #blendAlphaColor ( c1 = 0, c2 = 0, a1 = 255, a2 = 255 ){
+        return (c1 * a1 / 255) + (c2 * a2 * (255 - a1) / (255*255));
+    }
+    #blendBoolColor  ( c1 = 0, c2 = 0, a2 = 255 ){
+        if (!a2) 
+            return(c1) 
+        else 
+            return(c2); 
+    }
+    #updateMarker(){
+        if (!this.marker.isObject3D)
+            this.marker = new THREE.Mesh(
+                new THREE.TorusGeometry(1,.1, 4, 16),
+                new THREE.MeshBasicMaterial( 0x888888 )
+            )
+        //this.marker.size
+    }
     #draw( uv ){
         let cx = Math.floor ( uv.x * this.res ); 
         let cy = Math.floor ( uv.y * this.res ); 
         let ax = cx - this.brush.radius;
         let ay = cy - this.brush.radius;
-        let shift, shift2; 
-
-    
+        let shift, shift2;     
         for ( let i = 1; i < this.brush.size + 1; i++)
             for ( let j = 1; j < this.brush.size + 1; j++){
                 shift = ( ( i + ax - 1 ) + ( j + ay - 1 )  * this.res - 1  ) * 4; 
                 shift2 = i - 1 + (j - 1) * this.brush.size;
-                
                 this.data[shift]     = this.#blendBoolColor(this.data[shift], this.brush.color.r*255, this.brush.buffer[shift2]);
                 this.data[shift + 1] = this.#blendBoolColor(this.data[shift + 1], this.brush.color.g*255, this.brush.buffer[shift2]);
                 this.data[shift + 2] = this.#blendBoolColor(this.data[shift + 2], this.brush.color.b*255, this.brush.buffer[shift2]);
@@ -92,7 +100,6 @@ class PaintTexture{
             } 
         this.texture.needsUpdate = true; 
     }
-
     paint( uv ){
         //this.#stage();
         this.#draw( uv ); 
@@ -203,11 +210,11 @@ export class Scene3D{
     }   
     rayMouseUp(e) {
         if (e.button == 0) 
+            this.pt.stage(); 
             this.pt.onpaint = false; 
     }
     rayMouseDown(e){
         if (e.button == 0) {
-            this.pt.stage(); 
             this.pt.brush.changeColor( new THREE.Color(Math.random()*128+64, Math.random()*128+64, Math.random()*128+64) );
             this.pt.onpaint = true; 
         }
