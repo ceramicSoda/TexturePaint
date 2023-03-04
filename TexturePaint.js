@@ -59,9 +59,10 @@ class PaintTexture{
             return(c2); 
     }
     undo(){
-        this.data = new Uint8Array( this.history[this.history.length - 1] );
-        this.texture = new THREE.DataTexture(this.data, this.res, this.res);
         this.history.pop();
+        // three js will broke if we'll try to just equate data to history[last] for reasons
+        for (let i = 0; i < this.data.length; i++ )
+            this.data[i] = this.history[this.history.length - 1][i];
         this.texture.needsUpdate = true;
     }
     stage(){
