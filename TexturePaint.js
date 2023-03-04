@@ -38,8 +38,6 @@ class PaintTexture{
         this.onpaint                = false; 
         this.res                    = resolution; 
         this.brush                  = new PTBrush(); 
-        this.history                = []; 
-        this.historySize            = historySize; 
         this.raycaster              = raycaster;
         this.mesh                   = mesh;
         this.marker                 = null; 
@@ -48,12 +46,16 @@ class PaintTexture{
         this.texture.needsUpdate    = true; 
         this.texture.minFilter      = THREE.LinearMipmapLinearFilter;
         this.texture.magFilter      = THREE.LinearFilter;
+        this.history                = [];
+        this.historySize            = historySize; 
+        this.history.push(this.data); 
     }
     undo(){
         this.history.pop();
         // three js will broke if we'll try to just equate data to history[last] for reasons
-        for (let i = 0; i < this.data.length; i++ )
-            this.data[i] = this.history[this.history.length - 1][i];
+        if (this.history[0])
+            for (let i = 0; i < this.data.length; i++ )
+                this.data[i] = this.history[this.history.length - 1][i];
         this.texture.needsUpdate = true;
     }
     stage(){
@@ -79,7 +81,7 @@ class PaintTexture{
                 new THREE.TorusGeometry(1,.1, 4, 16),
                 new THREE.MeshBasicMaterial( 0x888888 )
             )
-        this.marker.size
+        //this.marker.size
     }
     #draw( uv ){
         let cx = Math.floor ( uv.x * this.res ); 
