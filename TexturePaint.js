@@ -42,21 +42,12 @@ class PaintTexture{
         this.historySize            = historySize; 
         this.raycaster              = raycaster;
         this.mesh                   = mesh;
+        this.marker                 = null; 
         this.data                   = new Uint8Array(this.res*this.res*4).fill(128);
         this.texture                = new THREE.DataTexture(this.data, this.res, this.res);
         this.texture.needsUpdate    = true; 
         this.texture.minFilter      = THREE.LinearMipmapLinearFilter;
         this.texture.magFilter      = THREE.LinearFilter;
-    }
-
-    #blendAlphaColor ( c1 = 0, c2 = 0, a1 = 255, a2 = 255 ){
-        return (c1 * a1 / 255) + (c2 * a2 * (255 - a1) / (255*255));
-    }
-    #blendBoolColor  ( c1 = 0, c2 = 0, a2 = 255 ){
-        if (!a2) 
-            return(c1) 
-        else 
-            return(c2); 
     }
     undo(){
         this.history.pop();
@@ -72,6 +63,23 @@ class PaintTexture{
             this.history.shift(); 
             this.history.push(new Uint8Array( this.data ));
         }
+    }
+    #blendAlphaColor ( c1 = 0, c2 = 0, a1 = 255, a2 = 255 ){
+        return (c1 * a1 / 255) + (c2 * a2 * (255 - a1) / (255*255));
+    }
+    #blendBoolColor  ( c1 = 0, c2 = 0, a2 = 255 ){
+        if (!a2) 
+            return(c1) 
+        else 
+            return(c2); 
+    }
+    #updateMarker(){
+        if (!this.marker.isObject3D)
+            this.marker = new THREE.Mesh(
+                new THREE.TorusGeometry(1,.1, 4, 16),
+                new THREE.MeshBasicMaterial( 0x888888 )
+            )
+        this.marker.size
     }
     #draw( uv ){
         let cx = Math.floor ( uv.x * this.res ); 
