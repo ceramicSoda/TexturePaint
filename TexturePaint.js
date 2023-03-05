@@ -47,6 +47,7 @@ class PaintTexture{
         this.raycaster              = raycaster;
         this.mesh                   = mesh;
         this.marker                 = null; 
+        this.markerTexture          = new THREE.Texture();
         this.data                   = new Uint8Array(this.res*this.res*4).fill(128);
         this.texture                = new THREE.DataTexture(this.data, this.res, this.res);
         this.texture.needsUpdate    = true; 
@@ -73,6 +74,8 @@ class PaintTexture{
     }
     #blendAlphaColor ( c1 = 0, c2 = 0, a1 = 255, a2 = 255 ){
         return Math.floor(c1 * a1 / 255) + (c2 * a2 * (255 - a1) / (255*255));
+       // return Math.floor( (c1));
+
     }
     #blendBoolColor  ( c1 = 0, c2 = 0, a2 = 255 ){
         if (!a2) 
@@ -80,13 +83,18 @@ class PaintTexture{
         else 
             return(c2); 
     }
-    #updateMarker(){
-        if (!this.marker.isObject3D)
-            this.marker = new THREE.Mesh(
-                new THREE.TorusGeometry(1,.1, 4, 16),
-                new THREE.MeshBasicMaterial( 0x888888 )
-            )
-        //this.marker.size
+    initMarker(){
+        let texdata = new Image(); 
+        texdata.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAACE1BMVEU2NjY3Nzc8PDw0NDQ4ODg/Pz8yMjI6OjpDQ0NJSUk9PT0QEBAwMDBbW1tVVVVOTk5CQkJKSkpBQUFHR0cBAQFQUFAREREEBAQICAhFRUUtLS1qamoYGBgGBgYODg5WVlZNTU1TU1MxMTFgYGBfX18aGhoHBwd0dHRMTEw1NTVXV1csLCwvLy8MDAxxcXEpKSkSEhI5OTlSUlL+/v4TExNlZWUeHh4lJSVvb28WFhYbGxtUVFRtbW1eXl5paWlmZmZAQEAzMzMuLi5ERERZWVliYmJjY2N9fX0kJCQnJycXFxchISEoKChLS0tycnImJiZnZ2doaGgUFBSenp4jIyNcXFxdXV0FBQX7+/vZ2dlsbGxwcHA7Ozvt7e3T09PPz88cHBwgICB+fn7h4eGQkJDQ0NDV1dXp6emSkpKMjIyxsbGgoKD8/PwZGRnHx8f9/f2Dg4NaWloqKiqXl5fNzc2UlJRRUVHv7+/b29umpqaRkZFISEhPT08KCgpYWFiJiYnd3d339/fLy8uPj48JCQn6+vrAwMArKyve3t7r6+uEhIQdHR2tra3S0tK6uroLCwvc3NxhYWHOzs55eXna2tq/v7/o6Oi2traIiIjn5+dkZGR/f3/Y2NjFxcX29vaFhYWkpKSOjo7i4uL19fWysrLm5uZra2siIiKKiop8fHzExMQNDQ0DAwMCAgIPDw8AAAD///8jFKXzAAADfElEQVR42iyUZXvjSAyAxxDHicPMnIYaaqhJ2gbLjFvaW2beY8bdY2ZmjGesn3jj7eqLNNL7yBqNZJQchSQilapbhJDj2nsXL87vGai5VXJJhIRGSaRgjN1BD8a+a6fhsZxJNTEeO4Wx7FBQSMZuardu0MD1+bhpeHj1MkBlnhJBGcshRGhcxq8APGEM5F3VqouM3spco8f+I4Ig4h5z4/MAG/mt5VwsJvQM/QXXx4tfA1hxMChTIBjE38O3uVIjlmF4vlzm+UysSDx3AUQ85ibIdQqb4KtWYJxjyqxeQ0V/zKPxludfuPM+DkqoiksAxVsGxLMai+i1272iTa9FhrrnBjyFZReS8AfgX1LjtoFuNWKORKx2UcPyhi3PBZjGJUQW4MBV5Gjcu2qOmsJh04TZ6u0eo36+DVewhMjTkK0LSKvxpp1h415iendoclpFjZare74AM73FTw8CNIFetDrDu5/WOp25uNFk1llYxpf/HH4hqAx/JGM0gT1iMs5u+A8PZzpxYzQ90PAxUoZ3JbQBa8sCYi06ZzbR+WuyUJj016bDZrtNm7kV+B3G0c+V8ILAsBbrxL3ZmclCKlWY2oxnnTobm9nxXAYreqGyun4CGCmwdgIMVQCte/6DMPq1EnkMDOObU4W1taOpjYSaQYsantvQRucr0w1ag02toeafPDqamplTa+hqM+fyv4EX7cHdHYPahkjUGO/M+P2btcRwIi3q+d5SA6CB7sOZFn0ovUVnNhkTc9/NzSbutSN2G8sYiAkOaKPe2fcV1U6K1pfaWePurjEbNetogszKy8/DmyMUSsE3ywaOYbsDXeSZqKkddaZ1tNMotnT2JvRGaETg9fWiSmhEuy6dTq/qvBaNluFW8tvwhiOEXI55uH42J3CMVt+1iIOBaNHoadxX6gLwikQB/NrN1DlfjEO8ltVTYbUM6vmaydOwrTjUoVUWYd9ff9sgcIihU8kwiBNyzdZz8INDUYdWlhU73Hk1sOgzCALHcT1B6P8tiVfgz6YiUyAkU8K7D5deTC7cz/XHx30ry9WdqwAfBhS6OPQWWCV2voTKbT9XDwSWmivRbbplT2LFjWWFAsojwjF7QL3Pfvbwx0/U7fxIVBQ3dVNAURQHTUWVefvCye5e+qfsUOj36eoqCkqORuoPgEhUk5w9OmFbJNSkHlWNkv8LMAC4oC50smPpNQAAAABJRU5ErkJggg=="
+        texdata.onload = () => { this.markerTexture.needsUpdate = true };
+        this.marker = new THREE.Mesh(
+            new THREE.PlaneGeometry(5,5),
+            new THREE.MeshStandardMaterial({ color: "#fff", transparent: true, side: THREE.DoubleSide, alphaTest: 0.1, depthTest: false })
+        )
+        this.marker.renderOrder = 999; 
+        this.markerTexture.image = texdata; 
+        this.marker.material.alphaMap = this.markerTexture; 
+        this.marker.scale.set(this.brush.size/9, this.brush.size/9, this.brush.size/9)
     }
     #draw( uv ){
         let cx = Math.floor ( uv.x * this.res ); 
@@ -176,7 +184,7 @@ export class Scene3D{
     }
 
     init(){
-        this.scene.background = new THREE.Color( 0x141417 );
+        //this.scene.background = new THREE.Color( 0x14141700 );
 
         this.renderer.setPixelRatio( window.devicePixelRatio );
         this.renderer.setSize( window.innerWidth, window.innerHeight );
@@ -188,20 +196,23 @@ export class Scene3D{
         this.controls.enablePan = false; 
         this.controls.enableDamping = true; 
         this.controls.mouseButtons = {RIGHT: THREE.MOUSE.ROTATE}
-        this.controls.touches = {ONE: THREE.TOUCH.ROTATE}
+        this.controls.touches = {TWO: THREE.TOUCH.DOLLY_PAN}
 
         this.camera.position.set( -32, 8, 64 );
 
         this.scene.add(this.mesh)
-        const light1 = new THREE.DirectionalLight( 0xffffff );
+        const light1 = new THREE.DirectionalLight( 0xdddddd );
         light1.position.set( 1, 1, 1 );
         this.scene.add( light1 );
-        const light2 = new THREE.DirectionalLight( 0xffffff );
+        const light2 = new THREE.DirectionalLight( 0xdddddd );
         light2.position.set( - 2, - 2, - 2 );
         this.scene.add( light2 );
-        const light3 = new THREE.AmbientLight( 0xffffff ); ;
+        const light3 = new THREE.AmbientLight( 0xaaaaaa ); ;
         this.scene.add( light3 );
         // Raycasting marker 
+        this.pt.initMarker(); 
+        this.scene.add(this.pt.marker)
+        
         this.marker = new THREE.Mesh(
             new THREE.SphereGeometry(.01, 16, 8 ), 
             new THREE.MeshBasicMaterial( 0xffffff )
@@ -230,6 +241,7 @@ export class Scene3D{
             this.pt.stage(); 
             this.pt.onpaint = true; 
         }
+        console.log(this.intersects)
     }
     keyUndo(e){
         if (e.keyCode == 90 && e.ctrlKey == true )
@@ -255,9 +267,10 @@ export class Scene3D{
         this.intersects = this.raycaster.intersectObject(this.mesh);
         if (this.intersects[0]) {
             document.body.style.cursor = 'none'
-            this.marker.position.x = this.intersects[0].point.x; 
-            this.marker.position.y = this.intersects[0].point.y; 
-            this.marker.position.z = this.intersects[0].point.z; 
+            this.pt.marker.lookAt(this.intersects[0].face.normal)
+            this.pt.marker.position.x = this.intersects[0].point.x; 
+            this.pt.marker.position.y = this.intersects[0].point.y; 
+            this.pt.marker.position.z = this.intersects[0].point.z; 
         }
             else document.body.style.cursor = 'default'
         this.renderer.render( this.scene, this.camera );
