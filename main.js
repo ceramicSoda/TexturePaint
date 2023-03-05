@@ -1,4 +1,4 @@
-import './reset.css'
+//import './reset.css'
 import './style.css'
 import { Scene3D } from './TexturePaint'; 
 

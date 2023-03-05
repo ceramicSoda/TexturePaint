@@ -121,7 +121,7 @@ export class Scene3D{
         // Commmon three stuf
         this.scene = new THREE.Scene;
         this.camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 1000 );
-        this.renderer = new THREE.WebGLRenderer();
+        this.renderer = new THREE.WebGLRenderer({alpha:true});
         this.canvasRoot = canvasRoot;
         this.controls = new OrbitControls( this.camera, this.renderer.domElement );
         
@@ -179,6 +179,8 @@ export class Scene3D{
         this.controls.enablePan = false; 
         this.controls.enableDamping = true; 
         this.controls.mouseButtons = {RIGHT: THREE.MOUSE.ROTATE}
+        this.controls.touches = {ONE: THREE.TOUCH.ROTATE}
+
         this.camera.position.set( -32, 8, 64 );
 
         this.scene.add(this.mesh)
