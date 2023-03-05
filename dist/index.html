@@ -4,12 +4,35 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vertex paint</title>
-    <script type="module" crossorigin src="/TexturePaint/assets/index-1921d1a7.js"></script>
-    <link rel="stylesheet" href="/TexturePaint/assets/index-8d7c093e.css">
+    <script type="module" crossorigin src="/TexturePaint/assets/index-2adc7157.js"></script>
+    <link rel="stylesheet" href="/TexturePaint/assets/index-d851e595.css">
   </head>
   <body>
-    <div id="canvas-wrap">
+    <div class="hint" id="hintDesktop">
+      <p class="hint-text">Mousewheel to zoom</p>
+      <p class="hint-text">RMB to rotate</p>
+      <p class="hint-text">LMB to draw</p>
+      <p class="hint-text">Ctrl + Z to undo</p>
     </div>
+    <div class="hint" id="hintTouch">
+      <p class="hint-text">Spread to zoom</p>
+      <p class="hint-text">Tap to draw</p>
+      <p class="hint-text">Two fingers slide to rotate</p>
+    </div>
+    <div class="controls">
+      <label for="radiusRange">Brush radius: </label>
+      <input type="range" id="radiusRange" name="radiusRange" 
+                                    min="0" max="127" value="8">
+      <input class="controls-range" type="range" id="hueRange" name="hueRange"
+                                    min="0" max="360" value="250" step="5">
+      <!--
+      <input type="checkbox" id="randomCheck" name="randomCheck" checked="true">
+                                    <label for="randomCheck">Random colors? </label> -->
+      <input class="controls-range" type="range" id="opacityRange" name="opacityRange" 
+                                    min="0" max="255" value="255" step="5">
+    </div>
+    <div id="canvas-wrap">
+    </div>  
     
   </body>
 </html>

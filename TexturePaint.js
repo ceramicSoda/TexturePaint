@@ -9,11 +9,17 @@ class PTBrush{
         this.radius         = radius;
         this.size           = radius * 2 - 1;
         this.smooth         = smooth; 
-        this.color          = new THREE.Color( 0xffffffff ); 
+        this.color          = new THREE.Color( 0xff40ffff ); 
+        this.opacity        = 255;
         this.buffer         = new Uint8Array(this.size*this.size).fill(255);
     }
     changeColor( color = this.color ){
-        color.isColor ? this.color = color : this.color = new THREE.Color(color); 
+        color.isColor ? this.color = color : this.color = new THREE.Color(color);    
+        this.color.a = this.opacity; 
+    }
+    changeOpacity( opacity = 255 ){
+        ( opacity > 255 || opacity < 0 ) ? this.opacity = 255 : this.opacity = opacity;
+        this.color.a = opacity;
     }
     changeBrush( radius = this.radius )
     {
@@ -51,15 +57,14 @@ class PaintTexture{
         this.history.push(this.data); 
     }
     undo(){
-        this.history.pop();
-        // three js will broke if we'll try to just equate data to history[last] for reasons
         if (this.history[0])
             for (let i = 0; i < this.data.length; i++ )
                 this.data[i] = this.history[this.history.length - 1][i];
+        this.history.pop();
         this.texture.needsUpdate = true;
     }
     stage(){
-        if ( this.historySize > this.history.length )
+        if ( this.historySize >= this.history.length )
             this.history.push(new Uint8Array( this.data ));
         else {
             this.history.shift(); 
@@ -67,7 +72,7 @@ class PaintTexture{
         }
     }
     #blendAlphaColor ( c1 = 0, c2 = 0, a1 = 255, a2 = 255 ){
-        return (c1 * a1 / 255) + (c2 * a2 * (255 - a1) / (255*255));
+        return Math.floor(c1 * a1 / 255) + (c2 * a2 * (255 - a1) / (255*255));
     }
     #blendBoolColor  ( c1 = 0, c2 = 0, a2 = 255 ){
         if (!a2) 
@@ -97,6 +102,10 @@ class PaintTexture{
                 this.data[shift + 1] = this.#blendBoolColor(this.data[shift + 1], this.brush.color.g*255, this.brush.buffer[shift2]);
                 this.data[shift + 2] = this.#blendBoolColor(this.data[shift + 2], this.brush.color.b*255, this.brush.buffer[shift2]);
                 this.data[shift + 3] = this.brush.buffer[shift2]; 
+                //this.data[shift]     = this.#blendAlphaColor(this.data[shift], this.brush.color.r*255, this.data[shift + 3], this.brush.buffer[shift2]);
+                //this.data[shift + 1]     = this.#blendAlphaColor(this.data[shift + 1], this.brush.color.g*255, this.data[shift + 3], this.brush.buffer[shift2]);
+                //this.data[shift + 2]     = this.#blendAlphaColor(this.data[shift + 2], this.brush.color.b*255, this.data[shift + 3], this.brush.buffer[shift2]);
+                //this.data[shift + 3] = 255; 
             } 
         this.texture.needsUpdate = true; 
     }
@@ -211,13 +220,14 @@ export class Scene3D{
         this.pointer.y = - (e.clientY / window.innerHeight) * 2 + 1;
     }   
     rayMouseUp(e) {
-        if (e.button == 0) 
-            this.pt.stage(); 
+        if (e.button == 0 && this.pt.onpaint){
             this.pt.onpaint = false; 
+        }
     }
     rayMouseDown(e){
-        if (e.button == 0) {
-            this.pt.brush.changeColor( new THREE.Color(Math.random()*128+64, Math.random()*128+64, Math.random()*128+64) );
+        if (e.button == 0 && this.intersects[0]) {
+            //this.pt.brush.changeColor( new THREE.Color(Math.random()*128+64, Math.random()*128+64, Math.random()*128+64) );
+            this.pt.stage(); 
             this.pt.onpaint = true; 
         }
     }

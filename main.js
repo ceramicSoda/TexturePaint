@@ -1,5 +1,3 @@
-//import './reset.css'
-import { Color } from 'three';
 import './style.css'
 import { Scene3D } from './TexturePaint'; 
 
@@ -23,5 +21,5 @@ radiusRangeEl.addEventListener("change", () => {
     scene3D.pt.brush.changeBrush(radiusRangeEl.value);
 })
 opacityRangeEl.addEventListener("change", () => {
-    scene3D.pt.brush.changeBrush(radiusRangeEl.value);
+    scene3D.pt.brush.changeOpacity(opacityRangeEl.value);
 })
