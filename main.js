@@ -1,26 +1,48 @@
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { LoadMesh } from './routines'
+import * as THREE from 'three';
 import './style.css'
-import { Scene3D } from './TexturePaint'; 
 
-let hueRangeEl = document.querySelector("#hueRange");
-let opacityRangeEl = document.querySelector("#opacityRange");
-let radiusRangeEl = document.querySelector("#radiusRange");
+const mesh = new THREE.Group();
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, .01, 1000 );
+const renderer = new THREE.WebGL1Renderer({alpha:true});
+const controls = new OrbitControls( camera, renderer.domElement );
 
-let scene3D = new Scene3D(document.querySelector("#canvas-wrap"))
-scene3D.init();
-scene3D.animate();
-window.addEventListener("resize", (e) =>  {scene3D.resize()});
-document.addEventListener("mousemove", (e) => {scene3D.rayMouseMove(e)});
-document.addEventListener("mouseup", (e) => {scene3D.rayMouseUp(e)});
-document.addEventListener("mousedown", (e) => {scene3D.rayMouseDown(e)});
-document.addEventListener("keydown", (e) => {scene3D.keyUndo(e)});
+init(); 
+animate();
 
-hueRangeEl.addEventListener("change", () => {
-    scene3D.pt.brush.changeColor("hsl(" + hueRangeEl.value + ", 100%, 60%)");
-})
-radiusRangeEl.addEventListener("change", () => {
-    scene3D.pt.brush.changeBrush(radiusRangeEl.value);
-    scene3D.pt.marker.scale.set(1+scene3D.pt.brush.size/30, 1+scene3D.pt.brush.size/30, 1+scene3D.pt.brush.size/30);
-})
-opacityRangeEl.addEventListener("change", () => {
-    scene3D.pt.brush.changeOpacity(opacityRangeEl.value);
+function init( ){
+  renderer.setSize( window.innerWidth, window.innerHeight );
+  document.body.appendChild(renderer.domElement)
+  camera.position.set(8,8,8)
+
+  controls.listenToKeyEvents( window );
+  controls.enablePan = false; 
+  controls.enableDamping = true; 
+  controls.mouseButtons = {RIGHT: THREE.MOUSE.ROTATE}
+  controls.touches = {TWO: THREE.TOUCH.DOLLY_PAN}
+
+  const light1 = new THREE.DirectionalLight( 0xdddddd );
+  const light2 = new THREE.DirectionalLight( 0xdddddd );
+  const light3 = new THREE.AmbientLight( 0xaaaaaa, .5 );
+  light1.position.set( -2, -2, -2 );
+  light2.position.set(  1,  1,  1 );
+  LoadMesh('assets/test.glb', mesh)
+  scene.add(mesh, light1, light2, light3);
+}
+
+function animate( ){
+  requestAnimationFrame(animate);
+  render(); 
+}
+
+function render( ){
+  renderer.render( scene, camera );
+  controls.update(); 
+}
+
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  renderer.setSize( window.innerWidth, window.innerHeight );
 })
