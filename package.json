@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview"
   },
+  "license": "ISC",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ceramicSoda/TexturePaint.git"
