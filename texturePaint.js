@@ -11,7 +11,7 @@ class TPBrush{
         this.buf            = new Uint8Array(this.s*this.s).fill(255);
     }
     
-    changeColor(color = this.col){
+    #changeColor(color = this.col){
         color.isColor ? this.col = color : this.col = new THREE.Color(color);    
         this.col.a = this.alpha; 
     }
@@ -90,7 +90,36 @@ export class TexurePaint{
         this.historySize            = historySize; 
         this.history.push(this.data); 
     }
-    applyMarker(){
+    mouse(key = "LEFT", context = document){
+        if (typeof(key) != "string")
+            console.warn(`Mouse key must be string - "LEFT", "RIGHT" or "MIDDLE"`)
+        else {
+            const btn = {
+                "LEFT": 0,
+                "RIGHT": 1,
+                "MIDDLE": 2
+            }
+            if (!btn[key])
+                console.warn(`Mouse key must be string - "LEFT", "RIGHT" or "MIDDLE"`)
+            else {
+                context.addEventListener("mousedown", (e) => {
+                    if (e.button == btn[key])
+                        startPaint();
+                })
+            }
+        }
+    }
+
+    startPaint(){
+        console.log("hui")
+    }
+    stopPaint(){
+        console.log("hui")
+    }
+    changeColor( color ){
+        this.brush.changeColor(color);
+    }
+    getMarker(){
         this.marker = new TPMarker();
         this.marker.init();
         return(this.marker.mesh);
@@ -121,17 +150,17 @@ export class TexurePaint{
             return(c2); 
     }
     #draw( uv ){
-        let ax = Math.floor(uv.x * this.res) - this.brush.radius;
-        let ay = Math.floor(uv.y * this.res) - this.brush.radius;
-        let shift, shift2;     
-        for (let i = 1; i < this.brush.size + 1; i++)
-            for (let j = 1; j < this.brush.size + 1; j++){
+        let ax = Math.floor(uv.x * this.res) - this.brush.r;
+        let ay = Math.floor(uv.y * this.res) - this.brush.r;
+        let shift1, shift2;     
+        for (let i = 1; i < this.brush.s + 1; i++)
+            for (let j = 1; j < this.brush.s + 1; j++){
                 shift = ((i + ax - 1) + (j + ay - 1) * this.res - 1) * 4; 
-                shift2 = i - 1 + (j - 1) * this.brush.size;
-                this.data[shift]     = this.#blendBoolColor(this.data[shift], this.brush.color.r*255, this.brush.buffer[shift2]);
-                this.data[shift + 1] = this.#blendBoolColor(this.data[shift + 1], this.brush.color.g*255, this.brush.buffer[shift2]);
-                this.data[shift + 2] = this.#blendBoolColor(this.data[shift + 2], this.brush.color.b*255, this.brush.buffer[shift2]);
-                this.data[shift + 3] = this.brush.buffer[shift2]; 
+                shift2 = i - 1 + (j - 1) * this.brush.s;
+                this.data[shift1]     = this.#blendBoolColor(this.data[shift1], this.brush.col.r*255, this.brush.buf[shift2]);
+                this.data[shift1 + 1] = this.#blendBoolColor(this.data[shift1 + 1], this.brush.col.g*255, this.brush.buf[shift2]);
+                this.data[shift1 + 2] = this.#blendBoolColor(this.data[shift1 + 2], this.brush.col.b*255, this.brush.buf[shift2]);
+                this.data[shift1 + 3] = this.brush.buf[shift2]; 
             } 
         this.texture.needsUpdate = true; 
     }

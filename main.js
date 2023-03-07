@@ -26,8 +26,9 @@ function init( ){
   light1.position.set( -2, -2, -2 );
   light2.position.set(  1,  1,  1 );
   loadMesh('assets/test.glb', mesh)
+  tp.mouse("LEFT", document);
   scene.add(mesh, light1, light2, light3);
-  scene.add(tp.applyMarker()); 
+  scene.add(tp.getMarker()); 
 
   controls.listenToKeyEvents( window );
   controls.enablePan = false; 
