@@ -8,6 +8,14 @@
     "build": "vite build",
     "preview": "vite preview"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ceramicSoda/TexturePaint.git"
+  },
+  "author": {
+    "name": "Ceramic Soda",
+    "url": "https://github.com/ceramicSoda"
+  },
   "devDependencies": {
     "vite": "^4.1.0",
     "vite-plugin-static-copy": "^0.13.0"
