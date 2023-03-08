@@ -52,7 +52,7 @@ class TPMarker{
     }
     init(){
         let texdata = new Image(); 
-        texdata.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAFVBMVEUAAACsrKyBgYFHR0fn5+fLy8v///8WTUTpAAACjklEQVR42uxb27KCMAwku0n//5MPIGpl5EyBtssM8uagJmw2V9JhOHQR4W5mYfOnoetFS+8r8jtAH1Uy+cnyGzFpFGiugC/C3SPsm2bGtkhY8hjtD67kMAOmsjFYhutIze+2qcC6KP3yU4d6CMD3/uEERFR7+ifjsC9M1AIAC9+tc6x5cW+JNhrxT4f3s5Hl+B9MBnCeDxvHIYx0Pq5yP4fzX1cjUgy665E9XagB5BhA682vgFqmAdtEPStWICq4/kYVUSi/FWHLEpTVLiZ2hz6tfBP7KysXU8cMAJ18iOWzGwE3+pYpXEYfpGPzTg8CutbQC9Wo1MDFxcGD7VBD4HIWyCEwKQtc7Qi2goASR8inGuitwtj08SMNe28NuM5CFDNC7pVKAKAOjKFOTvIC4TMmaLKz1AJQWyB0TkhMTw6Ey8gndf/Z/YabGj/PQdT6X6gRkFfnWgVc3aKFujsIMQKDXIGZA7F6Ad05GWHuCQZxNAh1QHaKmejyidG9hxWhVgDycY26KtDXprrObBnSjLkAMuPL6X/XnvAaY4HfZEg9sucVKKCMAlQXQlhtdBC9CTk2hvhslLvP6/MXBnaFqsTl45rf29QLvE3lrSHQs6CXEWj/VAg9ENje1mOXQYWJ2Y4rLGtdfluOLQmoNYB6XdHKF6whJiDalEdWLr9RgWaFoS6aLYJzj7e4MjVGUifnSOIN50UD5SC/1rmM43uqrDFEOrepi7M0XM7Jobnbbj+9kEg0T3Wded/G3/PoZb3HR9q1dBipdjR9uGXxmd55El3T+O8TtWVAMGqfFkL4xolakjDYSDp24nVObEa8NWufveC+qqvpW+fA2wHxMdHLFXBF9hxNYBbuhxeD/wQYANuQEnxmoEQiAAAAAElFTkSuQmCC"
+        texdata.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAAAGFBMVEX29vbIyMibm5vn5+djY2MuLi79/f0AAACXmgHHAAAB/UlEQVR42uyX25aDIAxFT276/388hItaRFvirNV5GJ6kq2xCEg4J1vEwVdZtwqxm4z9ivJpJBDsAEKEE+QhgllZjWZYjwKdCNECcAG35CVAYJwR640mWOmQHSCNA+oOg237fi9gOVtHGIL4GmJXtRTq3m7uVCkL47gia/pT9bcPQOILs1okqMg5XQQj27LiIgl4trwj7JJFuhq0PAesvAuwAMLbp5dVZKBOhWYKCdAMopfDq1HqWBdlstASWqVOotMuCasCkBRkAPzfcAJ/MubHcOjfBATJtQLXaTUAKwbQHNhPStglAAQPcC/CDO8BPEEikHDoyrPlDA4AcSUOOwfwJqhtF4S7A/AnW4jtwArjURgBJnpAASTDNYtc5j28Kyj/gDwGSPKuGMimv1IepLJxvY/AyuaJo0YMn1zkrtAQALihwRQoKQpa0tA5rUJLa24TyGZB1ae9CNgGhh8ULNrTSLPC0tbcxYkI1oAGKF2ZdmA2oFQqf6sf3BUotxlEt4tk4as0dNIkOqPpDPbAvKdLbUteeFtt81Z21joHvAUze7QwRteHo8wVnmSqIvuXR2jbJbcNhpXBZSt9zMGzvBUXtjRNb47bQ/mNrBV2/7V3j6Z1R6e/WvvEcOQejHPXWOZV+L4C0OY8SHhd5rswHAPVe/SQTX6NwmV0/AgwA4QtmFnE3MNgAAAAASUVORK5CYII="
         texdata.onload = () => { this.texture.needsUpdate = true };
         this.mesh = new THREE.Mesh(
             new THREE.CircleGeometry(1,16),
@@ -60,6 +60,8 @@ class TPMarker{
         )
         this.mesh.renderOrder = 999; 
         this.texture.image = texdata; 
+        this.texture.minFilter = THREE.LinearMipmapLinearFilter;
+        this.texture.magFilter = THREE.LinearFilter;
         this.mesh.material.alphaMap = this.texture; 
         this.mesh.scale.set(this.texel, this.texel, this.texel);
         return(this.mesh); 
@@ -76,45 +78,52 @@ export class TexurePaint{
     constructor( mesh = null, raycaster = null, resolution = 128, historySize = 20 )
     {
         this.raycaster              = raycaster;
+        this.intersects             = null;
         this.onpaint                = false; 
         this.res                    = resolution; 
         this.brush                  = new TPBrush(); 
         this.mesh                   = mesh;
         this.marker                 = null;  
-        this.data                   = new Uint8Array(this.res*this.res*4).fill(128);
+        this.data                   = new Uint8Array(this.res*this.res*4).fill(192);
         this.texture                = new THREE.DataTexture(this.data, this.res, this.res);
         this.texture.needsUpdate    = true; 
         this.texture.minFilter      = THREE.LinearMipmapLinearFilter;
         this.texture.magFilter      = THREE.LinearFilter;
+        this.texture.format         = THREE.RGBAFormat; 
         this.history                = [];
         this.historySize            = historySize; 
         this.history.push(this.data); 
     }
     mouse(key = "LEFT", context = document){
-        if (typeof(key) != "string")
-            console.warn(`Mouse key must be string - "LEFT", "RIGHT" or "MIDDLE"`)
-        else {
-            const btn = {
-                "LEFT": 0,
-                "RIGHT": 1,
-                "MIDDLE": 2
-            }
-            if (!btn[key])
-                console.warn(`Mouse key must be string - "LEFT", "RIGHT" or "MIDDLE"`)
-            else {
-                context.addEventListener("mousedown", (e) => {
-                    if (e.button == btn[key])
-                        startPaint();
-                })
-            }
+        if (typeof(key) != "string"){
+            console.warn(`Mouse key must be string - "LEFT", "RIGHT" or "MIDDLE"`);
+            return; 
         }
+        let keyIndex = 0;
+        switch(key){
+            case "LEFT": keyIndex = 0;
+            break;
+            case "RIGHT": keyIndex = 1;
+            break;
+            case "MIDDLE": keyIndex = 2;
+            break;
+        }
+        context.addEventListener("mousedown", (e) => {
+            if (e.button == keyIndex) 
+                this.startPaint(); 
+        })
+        context.addEventListener("mouseup", (e) => {
+            if (e.button == keyIndex) 
+                this.stopPaint(); 
+        })
     }
 
     startPaint(){
-        console.log("hui")
+        if (this.raycaster.intersectObject(this.mesh).length)
+            this.onpaint = true;
     }
     stopPaint(){
-        console.log("hui")
+        this.onpaint = false;
     }
     changeColor( color ){
         this.brush.changeColor(color);
@@ -149,28 +158,34 @@ export class TexurePaint{
         else 
             return(c2); 
     }
-    #draw( uv ){
+    #draw( uv ){ 
+        console.log("DRRRRRAW")
+        /*
         let ax = Math.floor(uv.x * this.res) - this.brush.r;
         let ay = Math.floor(uv.y * this.res) - this.brush.r;
         let shift1, shift2;     
         for (let i = 1; i < this.brush.s + 1; i++)
             for (let j = 1; j < this.brush.s + 1; j++){
-                shift = ((i + ax - 1) + (j + ay - 1) * this.res - 1) * 4; 
+                shift1 = ((i + ax - 1) + (j + ay - 1) * this.res - 1) * 4; 
                 shift2 = i - 1 + (j - 1) * this.brush.s;
                 this.data[shift1]     = this.#blendBoolColor(this.data[shift1], this.brush.col.r*255, this.brush.buf[shift2]);
                 this.data[shift1 + 1] = this.#blendBoolColor(this.data[shift1 + 1], this.brush.col.g*255, this.brush.buf[shift2]);
                 this.data[shift1 + 2] = this.#blendBoolColor(this.data[shift1 + 2], this.brush.col.b*255, this.brush.buf[shift2]);
                 this.data[shift1 + 3] = this.brush.buf[shift2]; 
-            } 
+            } */
         this.texture.needsUpdate = true; 
     }
     update(){
-        let intersects = this.raycaster.intersectObject(this.mesh);
-        if (intersects.length){
+        this.intersects = this.raycaster.intersectObject(this.mesh);
+        if (this.intersects.length){
             if (this.onpaint)
-                this.#draw( intersects[0].uv );
-            if (this.marker)
-                this.marker.place(intersects[0]);
+                this.#draw(this.intersects[0].uv);
+            if (this.marker){
+                document.body.style.cursor = 'none'
+                this.marker.place(this.intersects[0]);
+            }
+        } else {
+            document.body.style.cursor = 'default';
         }
     }
 }
