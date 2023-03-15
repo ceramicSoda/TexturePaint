@@ -51,6 +51,7 @@ function init( ){
   controls.enableDamping = true; 
   controls.mouseButtons = {RIGHT: THREE.MOUSE.ROTATE}
   controls.touches = {TWO: THREE.TOUCH.DOLLY_PAN}
+  
 }
 
 function animate( ){
