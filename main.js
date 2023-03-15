@@ -18,18 +18,17 @@ init();
 animate();
 
 function init( ){
- /*
   let loader = new GLTFLoader(); 
   let dracoLoader = new DRACOLoader(); 
   dracoLoader.setDecoderPath( 'https://www.gstatic.com/draco/v1/decoders/' ); 
   loader.setDRACOLoader(dracoLoader); 
   loader.loadAsync( "assets/test.glb", undefined)
-      .catch(err => console.error(err))
-      .then(gltf => {
-          mesh.add(...drillToMesh(gltf.scene.children))
-          mesh.children[0].material.map = tp.texture; 
-          console.log(tp.texture);
-      })*/
+    .catch(err => console.error(err))
+    .then(gltf => {
+        mesh.add(...drillToMesh(gltf.scene.children))
+        mesh.children[0].material.map = tp.getTexture(); 
+        console.log(tp.texture);
+  })
 
   renderer.setSize( window.innerWidth, window.innerHeight );
   document.body.appendChild(renderer.domElement);
@@ -40,12 +39,10 @@ function init( ){
   light1.position.set( -2, -2, -2 );
   light2.position.set(  1,  1,  1 );
   tp.mouse("LEFT", document);
-  mesh.add(new THREE.Mesh(new THREE.SphereGeometry(16,64,32), new THREE.MeshPhongMaterial(0xffffff)));
   tp.texture.needsUpdate = true;
   tp.brush.changeBrush(14,1);
-  mesh.children[0].material.map = tp.texture; 
-  mesh.children[0].material.map.needsUpdate = true;
-  console.log(mesh.children[0].material.map)
+
+  tp.brush.changeBrush(16, .5); 
   scene.add(mesh, light1, light2, light3);
   scene.add(tp.getMarker()); 
 
@@ -61,6 +58,7 @@ function animate( ){
   raycaster.setFromCamera(pointer, camera);
   renderer.render(scene, camera);
   controls.update(); 
+  tp.texture.needsUpdate = true; 
   tp.update();
 }
 
@@ -82,7 +80,7 @@ window.addEventListener("pointermove", (e) => {
 	pointer.y = - (e.clientY / window.innerHeight) * 2 + 1;
 })
 
-export function drillToMesh(childArray){
+function drillToMesh(childArray){
   if (childArray[0].type == "Group" || childArray[0].type == "Scene")
       return(drillToMesh(childArray[0].children))
   else if (childArray[0].type == "Mesh")

@@ -6,7 +6,7 @@ class TPBrush{
         this.r              = radius;
         this.s              = radius * 2 - 1;
         this.hard           = hardnress; 
-        this.col            = new THREE.Color( 0xffffffff ); 
+        this.col            = new THREE.Color( 0x00f00fff ); 
         this.alpha          = 255;
         this.buf            = new Uint8Array(this.s*this.s).fill(255);
     }
@@ -84,15 +84,15 @@ export class TexurePaint{
         this.brush                  = new TPBrush(); 
         this.mesh                   = mesh;
         this.marker                 = null;  
-        this.data                   = new Uint8Array(this.res*this.res*4).fill(192);
-        this.texture                = new THREE.DataTexture(this.data, this.res, this.res);
+        this.buf                    = new Uint8Array(this.res*this.res*4).fill(192);
+        this.texture                = new THREE.DataTexture(this.buf, this.res, this.res);
         this.texture.needsUpdate    = true; 
         this.texture.minFilter      = THREE.LinearMipmapLinearFilter;
         this.texture.magFilter      = THREE.LinearFilter;
         this.texture.format         = THREE.RGBAFormat; 
         this.history                = [];
         this.historySize            = historySize; 
-        this.history.push(this.data); 
+        this.history.push(this.buf); 
     }
     mouse(key = "LEFT", context = document){
         if (typeof(key) != "string"){
@@ -133,19 +133,24 @@ export class TexurePaint{
         this.marker.init();
         return(this.marker.mesh);
     }
+    getTexture(){
+        this.buf = new Uint8Array(this.res*this.res*4).fill(192);
+        this.texture = new THREE.DataTexture(this.buf, this.res, this.res);
+        return(this.texture);
+    }
     undo(){
         if (this.history[0])
-            for (let i = 0; i < this.data.length; i++ )
-                this.data[i] = this.history[this.history.length - 1][i];
+            for (let i = 0; i < this.buf.length; i++ )
+                this.buf[i] = this.history[this.history.length - 1][i];
         this.history.pop();
         this.texture.needsUpdate = true;
     }
     stage(){
         if ( this.historySize >= this.history.length )
-            this.history.push(new Uint8Array( this.data ));
+            this.history.push(new Uint8Array( this.buf ));
         else {
             this.history.shift(); 
-            this.history.push(new Uint8Array( this.data ));
+            this.history.push(new Uint8Array( this.buf ));
         }
     }
     #blendAlphaColor ( c1 = 0, c2 = 0, a1 = 255, a2 = 255 ){
@@ -159,8 +164,6 @@ export class TexurePaint{
             return(c2); 
     }
     #draw( uv ){ 
-        console.log("DRRRRRAW")
-        /*
         let ax = Math.floor(uv.x * this.res) - this.brush.r;
         let ay = Math.floor(uv.y * this.res) - this.brush.r;
         let shift1, shift2;     
@@ -168,18 +171,20 @@ export class TexurePaint{
             for (let j = 1; j < this.brush.s + 1; j++){
                 shift1 = ((i + ax - 1) + (j + ay - 1) * this.res - 1) * 4; 
                 shift2 = i - 1 + (j - 1) * this.brush.s;
-                this.data[shift1]     = this.#blendBoolColor(this.data[shift1], this.brush.col.r*255, this.brush.buf[shift2]);
-                this.data[shift1 + 1] = this.#blendBoolColor(this.data[shift1 + 1], this.brush.col.g*255, this.brush.buf[shift2]);
-                this.data[shift1 + 2] = this.#blendBoolColor(this.data[shift1 + 2], this.brush.col.b*255, this.brush.buf[shift2]);
-                this.data[shift1 + 3] = this.brush.buf[shift2]; 
-            } */
+                this.buf[shift1]     = this.#blendBoolColor(this.buf[shift1], this.brush.col.r*255, this.brush.buf[shift2]);
+                this.buf[shift1 + 1] = this.#blendBoolColor(this.buf[shift1 + 1], this.brush.col.g*255, this.brush.buf[shift2]);
+                this.buf[shift1 + 2] = this.#blendBoolColor(this.buf[shift1 + 2], this.brush.col.b*255, this.brush.buf[shift2]);
+                this.buf[shift1 + 3] = this.brush.buf[shift2];  
+            } 
         this.texture.needsUpdate = true; 
     }
     update(){
         this.intersects = this.raycaster.intersectObject(this.mesh);
         if (this.intersects.length){
-            if (this.onpaint)
+            if (this.onpaint){
                 this.#draw(this.intersects[0].uv);
+                this.texture.needsUpdate = true; 
+            }
             if (this.marker){
                 document.body.style.cursor = 'none'
                 this.marker.place(this.intersects[0]);
