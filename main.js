@@ -1,26 +1,88 @@
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { TexurePaint } from './texturePaint'
+import * as THREE from 'three';
 import './style.css'
-import { Scene3D } from './TexturePaint'; 
 
-let hueRangeEl = document.querySelector("#hueRange");
-let opacityRangeEl = document.querySelector("#opacityRange");
-let radiusRangeEl = document.querySelector("#radiusRange");
+const mesh = new THREE.Group();
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, .01, 1000 );
+const renderer = new THREE.WebGL1Renderer({alpha:true});
+const controls = new OrbitControls( camera, renderer.domElement );
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2(); 
+const tp = new TexurePaint(mesh, raycaster, 512); 
 
-let scene3D = new Scene3D(document.querySelector("#canvas-wrap"))
-scene3D.init();
-scene3D.animate();
-window.addEventListener("resize", (e) =>  {scene3D.resize()});
-document.addEventListener("mousemove", (e) => {scene3D.rayMouseMove(e)});
-document.addEventListener("mouseup", (e) => {scene3D.rayMouseUp(e)});
-document.addEventListener("mousedown", (e) => {scene3D.rayMouseDown(e)});
-document.addEventListener("keydown", (e) => {scene3D.keyUndo(e)});
+init(); 
+animate();
 
-hueRangeEl.addEventListener("change", () => {
-    scene3D.pt.brush.changeColor("hsl(" + hueRangeEl.value + ", 100%, 60%)");
+function init( ){
+  let loader = new GLTFLoader(); 
+  let dracoLoader = new DRACOLoader(); 
+  dracoLoader.setDecoderPath( 'https://www.gstatic.com/draco/v1/decoders/' ); 
+  loader.setDRACOLoader(dracoLoader); 
+  loader.loadAsync( "assets/test.glb", undefined)
+    .catch(err => console.error(err))
+    .then(gltf => {
+        mesh.add(...drillToMesh(gltf.scene.children))
+        mesh.children[0].material.map = tp.getTexture(); 
+        console.log(tp.texture);
+  })
+
+  renderer.setSize( window.innerWidth, window.innerHeight );
+  document.body.appendChild(renderer.domElement);
+  camera.position.set(64,16,64)
+  const light1 = new THREE.DirectionalLight( 0xdfffff, .8 );
+  const light2 = new THREE.DirectionalLight( 0xffefbf, .8 );
+  const light3 = new THREE.AmbientLight( 0xaaaaaa, .8 );
+  light1.position.set( -2, -2, -2 );
+  light2.position.set(  1,  1,  1 );
+  tp.mouse("LEFT", document);
+  tp.texture.needsUpdate = true;
+  tp.brush.changeBrush(14,1);
+
+  tp.brush.changeBrush(16, .5); 
+  scene.add(mesh, light1, light2, light3);
+  scene.add(tp.getMarker()); 
+
+  controls.listenToKeyEvents( window );
+  controls.enablePan = false; 
+  controls.enableDamping = true; 
+  controls.mouseButtons = {RIGHT: THREE.MOUSE.ROTATE}
+  controls.touches = {TWO: THREE.TOUCH.DOLLY_PAN}
+}
+
+function animate( ){
+  requestAnimationFrame(animate);
+  raycaster.setFromCamera(pointer, camera);
+  renderer.render(scene, camera);
+  controls.update(); 
+  tp.texture.needsUpdate = true; 
+  tp.update();
+}
+
+function getMaxBound(mesh){
+  let bb = new THREE.Box3().setFromObject(mesh);
+  let s = new THREE.Vector3();
+  bb.getSize(s);
+  return(Math.max(s.x, s.y, s.z));  
+}
+
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize( window.innerWidth, window.innerHeight );
 })
-radiusRangeEl.addEventListener("change", () => {
-    scene3D.pt.brush.changeBrush(radiusRangeEl.value);
-    scene3D.pt.marker.scale.set(1+scene3D.pt.brush.size/30, 1+scene3D.pt.brush.size/30, 1+scene3D.pt.brush.size/30);
+
+window.addEventListener("pointermove", (e) => {
+  pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+	pointer.y = - (e.clientY / window.innerHeight) * 2 + 1;
 })
-opacityRangeEl.addEventListener("change", () => {
-    scene3D.pt.brush.changeOpacity(opacityRangeEl.value);
-})
+
+function drillToMesh(childArray){
+  if (childArray[0].type == "Group" || childArray[0].type == "Scene")
+      return(drillToMesh(childArray[0].children))
+  else if (childArray[0].type == "Mesh")
+      return([...childArray]);
+}

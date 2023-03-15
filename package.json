@@ -1,12 +1,21 @@
 {
-  "name": "vertex-paint",
+  "name": "three-texture-paint",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
+  },
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ceramicSoda/TexturePaint.git"
+  },
+  "author": {
+    "name": "Ceramic Soda",
+    "url": "https://github.com/ceramicSoda"
   },
   "devDependencies": {
     "vite": "^4.1.0",
