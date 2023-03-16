@@ -1,8 +1,11 @@
 # Three JS Texture Paint
 
-**WARNING! This addon is currently in development! You may (will) find some issues**
+**⚠️WARNING! This addon is currently in development!⚠️**
+**⚠️You may (will) find some issues ⚠️**
 
-[DEMO](https://ceramicsoda.github.io/TexturePaint/)
+
+[🔥 DEMO 🔥](https://ceramicsoda.github.io/TexturePaint/)
+
 
 ![Three JS texture paint](./assets/monkey.gif); 
 
