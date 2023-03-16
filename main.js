@@ -5,9 +5,13 @@ import { TexurePaint } from './texturePaint'
 import * as THREE from 'three';
 import './style.css'
 
+let hueRangeEl = document.getElementById("hueRange"); 
+let radiusRangeEl = document.getElementById("radiusRange"); 
+let opacityRangeEl = document.getElementById("opacityRange");
+
 const mesh = new THREE.Group();
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, .01, 1000 );
+const camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, .01, 1000 );
 const renderer = new THREE.WebGL1Renderer({alpha:true});
 const controls = new OrbitControls( camera, renderer.domElement );
 const raycaster = new THREE.Raycaster();
@@ -27,7 +31,8 @@ function init( ){
     .then(gltf => {
         mesh.add(...drillToMesh(gltf.scene.children))
         mesh.children[0].material.map = tp.getTexture(); 
-        console.log(tp.texture);
+        controls.minDistance = getMaxBound(mesh.children[0]);
+        controls.maxDistance = controls.minDistance*2; 
   })
 
   renderer.setSize( window.innerWidth, window.innerHeight );
@@ -38,19 +43,16 @@ function init( ){
   const light3 = new THREE.AmbientLight( 0xaaaaaa, .8 );
   light1.position.set( -2, -2, -2 );
   light2.position.set(  1,  1,  1 );
-  tp.mouse("LEFT", document);
-  tp.texture.needsUpdate = true;
-  tp.brush.changeBrush(14,1);
-
-  tp.brush.changeBrush(16, .5); 
   scene.add(mesh, light1, light2, light3);
   scene.add(tp.getMarker()); 
 
+  tp.mouse("LEFT", document);
+  
   controls.listenToKeyEvents( window );
   controls.enablePan = false; 
   controls.enableDamping = true; 
   controls.mouseButtons = {RIGHT: THREE.MOUSE.ROTATE}
-  controls.touches = {TWO: THREE.TOUCH.DOLLY_PAN}
+  controls.touches = {TWO: THREE.TOUCH.DOLLY_PAN}  
 }
 
 function animate( ){
@@ -62,12 +64,7 @@ function animate( ){
   tp.update();
 }
 
-function getMaxBound(mesh){
-  let bb = new THREE.Box3().setFromObject(mesh);
-  let s = new THREE.Vector3();
-  bb.getSize(s);
-  return(Math.max(s.x, s.y, s.z));  
-}
+// -- Events
 
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
@@ -80,9 +77,34 @@ window.addEventListener("pointermove", (e) => {
 	pointer.y = - (e.clientY / window.innerHeight) * 2 + 1;
 })
 
+hueRangeEl.addEventListener("change", (e) => {
+  tp.brush.changeColor("hsl(" + hueRangeEl.value + ", 100%, 60%)");
+})
+
+radiusRangeEl.addEventListener("change", (e) => {
+  tp.changeBrush(radiusRangeEl.value ); 
+})
+
+opacityRangeEl.addEventListener("change", (e) => {
+  tp.brush.changeOpacity(opacityRangeEl.value ); 
+})
+
+document.addEventListener("keydown", (e) => {
+  if (e.keyCode == 90 && e.ctrlKey == true ) tp.undo(); 
+});
+
+// -- helpers
+
 function drillToMesh(childArray){
   if (childArray[0].type == "Group" || childArray[0].type == "Scene")
       return(drillToMesh(childArray[0].children))
   else if (childArray[0].type == "Mesh")
       return([...childArray]);
+}
+
+function getMaxBound(mesh){
+  let bb = new THREE.Box3().setFromObject(mesh);
+  let s = new THREE.Vector3();
+  bb.getSize(s);
+  return(Math.max(s.x, s.y, s.z));  
 }

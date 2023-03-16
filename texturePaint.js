@@ -1,29 +1,29 @@
 import * as THREE from 'three';
 
 class TPBrush{
-    constructor(radius = 5, hardnress = 1)
+    constructor(radius = 5, hardnress = 0.2)
     {
         this.r              = radius;
         this.s              = radius * 2 - 1;
         this.hard           = hardnress; 
         this.col            = new THREE.Color( 0x00f00fff ); 
-        this.alpha          = 255;
-        this.buf            = new Uint8Array(this.s*this.s).fill(255);
+        this.alpha          = 1;
+        this.buf            = new Uint8Array(this.s*this.s).fill(192);
+        this.changeBrush(radius, hardnress);
     }
     
-    #changeColor(color = this.col){
-        color.isColor ? this.col = color : this.col = new THREE.Color(color);    
-        this.col.a = this.alpha; 
+    changeColor(color = this.col){
+        color.isColor ? this.col = color : this.col = new THREE.Color(color);
     }
-    changeOpacity(opacity = 255){
-        (opacity > 255 || opacity < 0) ? this.alpha = 255 : this.alpha = opacity;
-        this.col.a = opacity;
+    changeOpacity(opacity = 1){
+        (opacity > 1 || opacity < 0) ? this.alpha = 1 : this.alpha = opacity;
     }
     #setPixel(d, r, hard){
         if (d > r)
             return 0;
         else {
-            let out = ((r - d) / (d - d / hard)) * 255;
+            //let out = ((r - d) / (d - d / hard)) * 255;
+            let out = (( r - d ) / r) * 255 * hard; 
             (out > 255) ? out = 255 : out = Math.floor(out);
             return out; 
         }
@@ -63,7 +63,7 @@ class TPMarker{
         this.texture.minFilter = THREE.LinearMipmapLinearFilter;
         this.texture.magFilter = THREE.LinearFilter;
         this.mesh.material.alphaMap = this.texture; 
-        this.mesh.scale.set(this.texel, this.texel, this.texel);
+        this.mesh.scale.set(this.texel);
         return(this.mesh); 
     }
     place(intersect){
@@ -84,7 +84,7 @@ export class TexurePaint{
         this.brush                  = new TPBrush(); 
         this.mesh                   = mesh;
         this.marker                 = null;  
-        this.buf                    = new Uint8Array(this.res*this.res*4).fill(192);
+        this.buf                    = new Uint8Array(this.res*this.res*4).fill(255);
         this.texture                = new THREE.DataTexture(this.buf, this.res, this.res);
         this.texture.needsUpdate    = true; 
         this.texture.minFilter      = THREE.LinearMipmapLinearFilter;
@@ -119,8 +119,10 @@ export class TexurePaint{
     }
 
     startPaint(){
-        if (this.raycaster.intersectObject(this.mesh).length)
+        if (this.raycaster.intersectObject(this.mesh).length){
+            this.stage(); 
             this.onpaint = true;
+        }
     }
     stopPaint(){
         this.onpaint = false;
@@ -128,13 +130,20 @@ export class TexurePaint{
     changeColor( color ){
         this.brush.changeColor(color);
     }
+    changeOpacity( opacity){
+        this.brush.changeOpacity(opacity); 
+    }
+    changeBrush( radius, hardnress ) {
+        this.brush.changeBrush(radius, hardnress);
+        this.marker.mesh.scale.set((1 + radius/9), (1 + radius/9), (1 + radius/9));
+    }
     getMarker(){
         this.marker = new TPMarker();
         this.marker.init();
         return(this.marker.mesh);
     }
     getTexture(){
-        this.buf = new Uint8Array(this.res*this.res*4).fill(192);
+        this.buf = new Uint8Array(this.res*this.res*4).fill(255);
         this.texture = new THREE.DataTexture(this.buf, this.res, this.res);
         return(this.texture);
     }
@@ -153,28 +162,30 @@ export class TexurePaint{
             this.history.push(new Uint8Array( this.buf ));
         }
     }
-    #blendAlphaColor ( c1 = 0, c2 = 0, a1 = 255, a2 = 255 ){
-        return Math.floor(c1 * a1 / 255) + (c2 * a2 * (255 - a1) / (255*255));
-       // return Math.floor( (c1));
+    #blendAlpha( a1 = 1, a2 = 1 ){
+        return(Math.round(a1 + a2*(255 - a1) / 255));
     }
-    #blendBoolColor  ( c1 = 0, c2 = 0, a2 = 255 ){
-        if (!a2) 
-            return(c1) 
-        else 
-            return(c2); 
+    #blendColor ( c1 = 0, c2 = 0, a1 = 255, a2 = 255, a3 = 255 ){
+        //return Math.floor((c1 * a1 + c2 * a2 * (255 - a2) / 255)/255  ); // psychodelic  
+        return Math.floor((c2*a2 + c1*a1*(255 - a2)/255)/a3); 
     }
     #draw( uv ){ 
         let ax = Math.floor(uv.x * this.res) - this.brush.r;
         let ay = Math.floor(uv.y * this.res) - this.brush.r;
+        let backAlpha = 0; 
         let shift1, shift2;     
         for (let i = 1; i < this.brush.s + 1; i++)
             for (let j = 1; j < this.brush.s + 1; j++){
                 shift1 = ((i + ax - 1) + (j + ay - 1) * this.res - 1) * 4; 
                 shift2 = i - 1 + (j - 1) * this.brush.s;
-                this.buf[shift1]     = this.#blendBoolColor(this.buf[shift1], this.brush.col.r*255, this.brush.buf[shift2]);
-                this.buf[shift1 + 1] = this.#blendBoolColor(this.buf[shift1 + 1], this.brush.col.g*255, this.brush.buf[shift2]);
-                this.buf[shift1 + 2] = this.#blendBoolColor(this.buf[shift1 + 2], this.brush.col.b*255, this.brush.buf[shift2]);
-                this.buf[shift1 + 3] = this.brush.buf[shift2];  
+                backAlpha = this.#blendAlpha((this.buf[shift1 + 3]), (this.brush.buf[shift2]*this.brush.alpha)); 
+                this.buf[shift1] = this.#blendColor(this.buf[shift1], this.brush.col.r*255, 
+                    this.buf[shift1 + 3], this.brush.buf[shift2]*this.brush.alpha, backAlpha)
+                this.buf[shift1+1] = this.#blendColor(this.buf[shift1+1], this.brush.col.g*255, 
+                    this.buf[shift1 + 3], this.brush.buf[shift2]*this.brush.alpha, backAlpha)
+                this.buf[shift1+2] = this.#blendColor(this.buf[shift1+2], this.brush.col.b*255, 
+                    this.buf[shift1 + 3], this.brush.buf[shift2]*this.brush.alpha, backAlpha)
+                this.buf[shift1 + 3] = backAlpha; 
             } 
         this.texture.needsUpdate = true; 
     }
