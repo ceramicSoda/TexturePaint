@@ -84,6 +84,11 @@ hueRangeEl.addEventListener("change", (e) => {
 radiusRangeEl.addEventListener("change", (e) => {
   tp.brush.changeBrush(radiusRangeEl.value ); 
 })
+
+opacityRangeEl.addEventListener("change", (e) => {
+  tp.brush.changeOpacity(opacityRangeEl.value ); 
+})
+
 document.addEventListener("keydown", (e) => {
   if (e.keyCode == 90 && e.ctrlKey == true ) tp.undo(); 
 });

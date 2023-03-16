@@ -7,17 +7,15 @@ class TPBrush{
         this.s              = radius * 2 - 1;
         this.hard           = hardnress; 
         this.col            = new THREE.Color( 0x00f00fff ); 
-        this.alpha          = 255;
+        this.alpha          = 1;
         this.buf            = new Uint8Array(this.s*this.s).fill(192);
     }
     
     changeColor(color = this.col){
-        color.isColor ? this.col = color : this.col = new THREE.Color(color);    
-        this.col.a = this.alpha; 
+        color.isColor ? this.col = color : this.col = new THREE.Color(color);
     }
-    changeOpacity(opacity = 255){
-        (opacity > 255 || opacity < 0) ? this.alpha = 255 : this.alpha = opacity;
-        this.col.a = opacity;
+    changeOpacity(opacity = 1){
+        (opacity > 1 || opacity < 0) ? this.alpha = 1 : this.alpha = opacity;
     }
     #setPixel(d, r, hard){
         if (d > r)
@@ -170,10 +168,13 @@ export class TexurePaint{
             for (let j = 1; j < this.brush.s + 1; j++){
                 shift1 = ((i + ax - 1) + (j + ay - 1) * this.res - 1) * 4; 
                 shift2 = i - 1 + (j - 1) * this.brush.s;
-                backAlpha = this.#blendAlpha((this.buf[shift1 + 3]), (this.brush.buf[shift2])); 
-                this.buf[shift1] = this.#blendColor(this.buf[shift1], this.brush.col.r*255, this.buf[shift1 + 3], this.brush.buf[shift2], backAlpha)
-                this.buf[shift1+1] = this.#blendColor(this.buf[shift1+1], this.brush.col.g*255, this.buf[shift1 + 3], this.brush.buf[shift2], backAlpha)
-                this.buf[shift1+2] = this.#blendColor(this.buf[shift1+2], this.brush.col.b*255, this.buf[shift1 + 3], this.brush.buf[shift2], backAlpha)
+                backAlpha = this.#blendAlpha((this.buf[shift1 + 3]), (this.brush.buf[shift2]*this.brush.alpha)); 
+                this.buf[shift1] = this.#blendColor(this.buf[shift1], this.brush.col.r*255, 
+                    this.buf[shift1 + 3], this.brush.buf[shift2]*this.brush.alpha, backAlpha)
+                this.buf[shift1+1] = this.#blendColor(this.buf[shift1+1], this.brush.col.g*255, 
+                    this.buf[shift1 + 3], this.brush.buf[shift2]*this.brush.alpha, backAlpha)
+                this.buf[shift1+2] = this.#blendColor(this.buf[shift1+2], this.brush.col.b*255, 
+                    this.buf[shift1 + 3], this.brush.buf[shift2]*this.brush.alpha, backAlpha)
                 this.buf[shift1 + 3] = backAlpha; 
             } 
         this.texture.needsUpdate = true; 
