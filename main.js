@@ -40,9 +40,7 @@ function init( ){
   light2.position.set(  1,  1,  1 );
   tp.mouse("LEFT", document);
   tp.texture.needsUpdate = true;
-  tp.brush.changeBrush(14,1);
-
-  tp.brush.changeBrush(16, .5); 
+  tp.brush.changeBrush(14,0.2);
   scene.add(mesh, light1, light2, light3);
   scene.add(tp.getMarker()); 
 
