@@ -7,7 +7,7 @@
 ![Three JS texture paint](./assets/monkey.gif); 
 
 **USAGE**
-```
+```javascript
 // Make an tp instance with params you need:
 // Mesh you will paint on, raycaster and texture resolution
 import { TexurePaint } from './texturePaint'
