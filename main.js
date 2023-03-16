@@ -11,7 +11,7 @@ let opacityRangeEl = document.getElementById("opacityRange");
 
 const mesh = new THREE.Group();
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, .01, 1000 );
+const camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, .01, 1000 );
 const renderer = new THREE.WebGL1Renderer({alpha:true});
 const controls = new OrbitControls( camera, renderer.domElement );
 const raycaster = new THREE.Raycaster();
@@ -31,7 +31,8 @@ function init( ){
     .then(gltf => {
         mesh.add(...drillToMesh(gltf.scene.children))
         mesh.children[0].material.map = tp.getTexture(); 
-        console.log(tp.texture);
+        controls.minDistance = getMaxBound(mesh.children[0]);
+        controls.maxDistance = controls.minDistance*2; 
   })
 
   renderer.setSize( window.innerWidth, window.innerHeight );

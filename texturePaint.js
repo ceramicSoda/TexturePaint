@@ -83,7 +83,7 @@ export class TexurePaint{
         this.brush                  = new TPBrush(); 
         this.mesh                   = mesh;
         this.marker                 = null;  
-        this.buf                    = new Uint8Array(this.res*this.res*4).fill(192);
+        this.buf                    = new Uint8Array(this.res*this.res*4).fill(255);
         this.texture                = new THREE.DataTexture(this.buf, this.res, this.res);
         this.texture.needsUpdate    = true; 
         this.texture.minFilter      = THREE.LinearMipmapLinearFilter;
@@ -118,8 +118,10 @@ export class TexurePaint{
     }
 
     startPaint(){
-        if (this.raycaster.intersectObject(this.mesh).length)
+        if (this.raycaster.intersectObject(this.mesh).length){
+            this.stage(); 
             this.onpaint = true;
+        }
     }
     stopPaint(){
         this.onpaint = false;
