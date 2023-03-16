@@ -43,12 +43,11 @@ function init( ){
   const light3 = new THREE.AmbientLight( 0xaaaaaa, .8 );
   light1.position.set( -2, -2, -2 );
   light2.position.set(  1,  1,  1 );
-  tp.mouse("LEFT", document);
-  tp.texture.needsUpdate = true;
-  tp.brush.changeBrush(14,0.2);
   scene.add(mesh, light1, light2, light3);
   scene.add(tp.getMarker()); 
 
+  tp.mouse("LEFT", document);
+  
   controls.listenToKeyEvents( window );
   controls.enablePan = false; 
   controls.enableDamping = true; 
@@ -83,7 +82,7 @@ hueRangeEl.addEventListener("change", (e) => {
 })
 
 radiusRangeEl.addEventListener("change", (e) => {
-  tp.brush.changeBrush(radiusRangeEl.value ); 
+  tp.changeBrush(radiusRangeEl.value ); 
 })
 
 opacityRangeEl.addEventListener("change", (e) => {

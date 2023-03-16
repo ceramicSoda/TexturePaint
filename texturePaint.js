@@ -9,6 +9,7 @@ class TPBrush{
         this.col            = new THREE.Color( 0x00f00fff ); 
         this.alpha          = 1;
         this.buf            = new Uint8Array(this.s*this.s).fill(192);
+        this.changeBrush(radius, hardnress);
     }
     
     changeColor(color = this.col){
@@ -62,7 +63,7 @@ class TPMarker{
         this.texture.minFilter = THREE.LinearMipmapLinearFilter;
         this.texture.magFilter = THREE.LinearFilter;
         this.mesh.material.alphaMap = this.texture; 
-        this.mesh.scale.set(this.texel, this.texel, this.texel);
+        this.mesh.scale.set(this.texel);
         return(this.mesh); 
     }
     place(intersect){
@@ -128,6 +129,13 @@ export class TexurePaint{
     }
     changeColor( color ){
         this.brush.changeColor(color);
+    }
+    changeOpacity( opacity){
+        this.brush.changeOpacity(opacity); 
+    }
+    changeBrush( radius, hardnress ) {
+        this.brush.changeBrush(radius, hardnress);
+        this.marker.mesh.scale.set((1 + radius/9), (1 + radius/9), (1 + radius/9));
     }
     getMarker(){
         this.marker = new TPMarker();
