@@ -5,6 +5,10 @@ import { TexurePaint } from './texturePaint'
 import * as THREE from 'three';
 import './style.css'
 
+let hueRangeEl = document.getElementById("hueRange"); 
+let radiusRangeEl = document.getElementById("radiusRange"); 
+let opacityRangeEl = document.getElementById("opacityRange");
+
 const mesh = new THREE.Group();
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, .01, 1000 );
@@ -48,8 +52,7 @@ function init( ){
   controls.enablePan = false; 
   controls.enableDamping = true; 
   controls.mouseButtons = {RIGHT: THREE.MOUSE.ROTATE}
-  controls.touches = {TWO: THREE.TOUCH.DOLLY_PAN}
-  
+  controls.touches = {TWO: THREE.TOUCH.DOLLY_PAN}  
 }
 
 function animate( ){
@@ -61,12 +64,7 @@ function animate( ){
   tp.update();
 }
 
-function getMaxBound(mesh){
-  let bb = new THREE.Box3().setFromObject(mesh);
-  let s = new THREE.Vector3();
-  bb.getSize(s);
-  return(Math.max(s.x, s.y, s.z));  
-}
+// -- Events
 
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
@@ -79,9 +77,29 @@ window.addEventListener("pointermove", (e) => {
 	pointer.y = - (e.clientY / window.innerHeight) * 2 + 1;
 })
 
+hueRangeEl.addEventListener("change", (e) => {
+  tp.brush.changeColor("hsl(" + hueRangeEl.value + ", 100%, 60%)");
+})
+
+radiusRangeEl.addEventListener("change", (e) => {
+  tp.brush.changeBrush(radiusRangeEl.value ); 
+})
+document.addEventListener("keydown", (e) => {
+  if (e.keyCode == 90 && e.ctrlKey == true ) tp.undo(); 
+});
+
+// -- helpers
+
 function drillToMesh(childArray){
   if (childArray[0].type == "Group" || childArray[0].type == "Scene")
       return(drillToMesh(childArray[0].children))
   else if (childArray[0].type == "Mesh")
       return([...childArray]);
+}
+
+function getMaxBound(mesh){
+  let bb = new THREE.Box3().setFromObject(mesh);
+  let s = new THREE.Vector3();
+  bb.getSize(s);
+  return(Math.max(s.x, s.y, s.z));  
 }

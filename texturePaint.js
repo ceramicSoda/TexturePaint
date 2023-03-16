@@ -11,7 +11,7 @@ class TPBrush{
         this.buf            = new Uint8Array(this.s*this.s).fill(192);
     }
     
-    #changeColor(color = this.col){
+    changeColor(color = this.col){
         color.isColor ? this.col = color : this.col = new THREE.Color(color);    
         this.col.a = this.alpha; 
     }
@@ -24,7 +24,7 @@ class TPBrush{
             return 0;
         else {
             //let out = ((r - d) / (d - d / hard)) * 255;
-            let out = (( r - d ) / r) * 255; 
+            let out = (( r - d ) / r) * 255 * hard; 
             (out > 255) ? out = 255 : out = Math.floor(out);
             return out; 
         }
