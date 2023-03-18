@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import './style.css'
 
 let hueRangeEl = document.getElementById("hueRange"); 
+let hardRangeEl = document.getElementById("hardRange"); 
 let radiusRangeEl = document.getElementById("radiusRange"); 
 let opacityRangeEl = document.getElementById("opacityRange");
 
@@ -82,7 +83,11 @@ hueRangeEl.addEventListener("change", (e) => {
 })
 
 radiusRangeEl.addEventListener("change", (e) => {
-  tp.changeBrush(radiusRangeEl.value ); 
+  tp.changeBrush(radiusRangeEl.value, hardRangeEl.value ); 
+})
+
+hardRangeEl.addEventListener("change", (e) => {
+  tp.changeBrush( radiusRangeEl.value, hardRangeEl.value ); 
 })
 
 opacityRangeEl.addEventListener("change", (e) => {
