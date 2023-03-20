@@ -7,7 +7,7 @@
 [🔥 DEMO 🔥](https://ceramicsoda.github.io/TexturePaint/)
 
 
-![Three JS texture paint](./assets/monkey.gif); 
+![Three JS texture paint](./assets/monkey.gif)
 
 **USAGE**
 ```javascript

@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import './style.css'
 
 let hueRangeEl = document.getElementById("hueRange"); 
+let hardRangeEl = document.getElementById("hardRange"); 
 let radiusRangeEl = document.getElementById("radiusRange"); 
 let opacityRangeEl = document.getElementById("opacityRange");
 
@@ -31,12 +32,16 @@ function init( ){
     .then(gltf => {
         mesh.add(...drillToMesh(gltf.scene.children))
         mesh.children[0].material.map = tp.getTexture(); 
+        mesh.children[0].material.transparent = true; 
+        mesh.children[0].material.opacity = 1; 
+        mesh.children[0].material.needsUpdate = true; 
+        
         controls.minDistance = getMaxBound(mesh.children[0]);
         controls.maxDistance = controls.minDistance*2; 
   })
 
   renderer.setSize( window.innerWidth, window.innerHeight );
-  document.body.appendChild(renderer.domElement);
+  document.getElementById("viewport").appendChild(renderer.domElement);
   camera.position.set(64,16,64)
   const light1 = new THREE.DirectionalLight( 0xdfffff, .8 );
   const light2 = new THREE.DirectionalLight( 0xffefbf, .8 );
@@ -82,7 +87,11 @@ hueRangeEl.addEventListener("change", (e) => {
 })
 
 radiusRangeEl.addEventListener("change", (e) => {
-  tp.changeBrush(radiusRangeEl.value ); 
+  tp.changeBrush(radiusRangeEl.value, hardRangeEl.value ); 
+})
+
+hardRangeEl.addEventListener("change", (e) => {
+  tp.changeBrush( radiusRangeEl.value, hardRangeEl.value ); 
 })
 
 opacityRangeEl.addEventListener("change", (e) => {

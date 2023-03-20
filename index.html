@@ -6,6 +6,7 @@
     <title>Vertex paint</title>
   </head>
   <body>
+    <div id="viewport"></div>
     <div class="hint" id="hintDesktop">
       <p class="hint-text">Mousewheel to zoom</p>
       <p class="hint-text">RMB to rotate</p>
@@ -20,12 +21,12 @@
     <div class="controls">
       <label for="radiusRange">Brush radius: </label>
       <input type="range" id="radiusRange" name="radiusRange" 
-                                    min="0" max="48" value="8">
+                                    min="0" max="72" value="8">
+      <label for="hardRange">Brush hardness: </label>
+      <input type="range" id="hardRange" name="hardRange" 
+                                    min="0" max="1" value="1" step="0.05">
       <input class="controls-range" type="range" id="hueRange" name="hueRange"
                                     min="0" max="360" value="250" step="5">
-      <!--
-      <input type="checkbox" id="randomCheck" name="randomCheck" checked="true">
-                                    <label for="randomCheck">Random colors? </label> -->
       <input class="controls-range" type="range" id="opacityRange" name="opacityRange" 
                                     min="0" max="1" value="1" step="0.05">
     </div>

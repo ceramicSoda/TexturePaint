@@ -34,7 +34,7 @@ class TPBrush{
         (hardnress > 0 && hardnress < 1) ? this.hard = hardnress : this.hard = 1; 
         this.s = this.r * 2 - 1; 
         let shift, d, k; 
-        this.buf = new Uint8Array(this.s*this.s*4).fill(0);
+        this.buf = new Uint8Array(this.s*this.s*4).fill(255);
         for (let i = 1; i < this.s + 1; i++)
             for (let j = 1; j < this.s + 1; j++){
                 shift = i + (j - 1) * this.s - 1;
