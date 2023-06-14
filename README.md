@@ -11,7 +11,7 @@
 
 **USAGE**
 ```javascript
-// Make an tp instance with params you need:
+// Make a tp instance with params you need:
 // Mesh you will paint on, raycaster and texture resolution
 import { TexurePaint } from './texturePaint'
 const tp = new TexurePaint(mesh, raycaster, 512); 
